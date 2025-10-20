@@ -3,8 +3,11 @@ import prisma from "@/utils/prisma";
 
 export default async function BlogPage() {
   const posts = await prisma.post.findMany({
+    where: {
+      published: true,
+    },
     orderBy: {
-      createdAt: "desc",
+        createdAt: "desc",
     },
     include: {
       author: {

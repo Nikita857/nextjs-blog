@@ -1,7 +1,7 @@
 import { auth } from "@/auth/auth";
 import prisma from "@/utils/prisma";
 import { redirect } from "next/navigation";
-import PostForm from "@/forms/post.form.tsx";
+import PostForm from "@/forms/post.form";
 
 export default async function CreatePostPage() {
   const session = await auth();
@@ -15,6 +15,7 @@ export default async function CreatePostPage() {
 
     const title = formData.get("title") as string;
     const content = formData.get("content") as string;
+    const published = formData.get("published") === "on";
     const session = await auth();
 
     if (!session?.user?.id) {
@@ -29,6 +30,7 @@ export default async function CreatePostPage() {
         title,
         content,
         authorId: session.user.id,
+        published,
       },
     });
 

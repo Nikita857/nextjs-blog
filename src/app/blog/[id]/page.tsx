@@ -23,11 +23,11 @@ export default async function PostPage({ params }: Props) {
 
   const isAuthor = session?.user?.id === post.authorId;
 
-  // --- SERVER ACTION ДЛЯ ОБНОВЛЕНИЯ ---
   async function updatePost(formData: FormData) {
     "use server";
     const title = formData.get("title") as string;
     const content = formData.get("content") as string;
+    const published = formData.get("published") === "on";
     if (!title || !content) return;
 
     const postToUpdate = await prisma.post.findUnique({ where: { id: params.id } });
@@ -38,13 +38,12 @@ export default async function PostPage({ params }: Props) {
 
     await prisma.post.update({
       where: { id: params.id },
-      data: { title, content },
+      data: { title, content, published },
     });
 
     revalidatePath(`/blog/${params.id}`); // Обновляем кеш страницы
   }
 
-  // --- SERVER ACTION ДЛЯ УДАЛЕНИЯ ---
   async function deletePost() {
     "use server";
     const postToDelete = await prisma.post.findUnique({ where: { id: params.id } });
@@ -54,7 +53,7 @@ export default async function PostPage({ params }: Props) {
     }
 
     await prisma.post.delete({ where: { id: params.id } });
-    // redirect("/blog"); // Редирект больше не нужен, т.к. PostActions не используется на странице, с которой удалили пост
+
   }
 
   return (
