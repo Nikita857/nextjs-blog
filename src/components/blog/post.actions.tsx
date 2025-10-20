@@ -5,16 +5,18 @@ import { useState } from "react";
 import { Button } from "@heroui/react";
 import CustomModal from "../common/modal";
 import PostForm from "@/forms/post.form"; // 1. Меняем импорт на универсальную форму
-import { Post } from "@/generated/prisma/client";
+import type { Post, Category } from "@prisma/client";
 
 type Props = {
-  post: Post;
+  post: Post & { categories: Category[] };
+  allCategories: Category[];
   updatePostAction: (formData: FormData) => void;
   deletePostAction: () => void;
 };
 
 export default function PostActions({
   post,
+  allCategories, // Принимаем новый пропс
   updatePostAction,
   deletePostAction,
 }: Props) {
@@ -51,12 +53,12 @@ export default function PostActions({
         size="xl"
       >
         {/* 2. Вызываем PostForm и передаем ей нужные пропсы */}
-        <PostForm
-          post={post}
-          formAction={handleUpdate}
-          buttonText="Сохранить изменения"
-        />
-      </CustomModal>
+                <PostForm 
+                  post={post} 
+                  formAction={handleUpdate} 
+                  allCategories={allCategories} // <-- Передаем дальше
+                  buttonText="Сохранить изменения" 
+                />      </CustomModal>
     </footer>
   );
 }

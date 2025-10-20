@@ -2,7 +2,8 @@ import { auth } from "@/auth/auth";
 import prisma from "@/utils/prisma";
 import { notFound } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import PostActions from "@/components/blog/post.actions"; // Импортируем новый компонент
+import PostActions from "@/components/blog/post.actions";
+import Link from "next/link";
 
 type Props = {
   params: {
@@ -12,12 +13,25 @@ type Props = {
 
 export default async function PostPage({ params }: Props) {
   const session = await auth();
+
+  // 1. При загрузке поста, сразу включаем в запрос связанные с ним рубрики
   const post = await prisma.post.findUnique({
     where: { id: params.id },
-    include: { author: { select: { email: true } } },
+    include: {
+      author: { select: { email: true } },
+      categories: true, // <-- Включаем рубрики поста
+    },
   });
 
+  // 2. Также загружаем ПОЛНЫЙ список всех рубрик для формы
+  const allCategories = await prisma.category.findMany();
+
   if (!post) {
+    notFound();
+  }
+
+  // 3. Проверка доступа к неопубликованным постам
+  if (!post.published && post.authorId !== session?.user?.id) {
     notFound();
   }
 
@@ -28,9 +42,12 @@ export default async function PostPage({ params }: Props) {
     const title = formData.get("title") as string;
     const content = formData.get("content") as string;
     const published = formData.get("published") === "on";
+    const categoryIds = formData.getAll("categoryIds") as string[];
     if (!title || !content) return;
 
-    const postToUpdate = await prisma.post.findUnique({ where: { id: params.id } });
+    const postToUpdate = await prisma.post.findUnique({
+      where: { id: params.id },
+    });
     const currentSession = await auth();
     if (!postToUpdate || postToUpdate.authorId !== currentSession?.user?.id) {
       throw new Error("Unauthorized");
@@ -38,22 +55,33 @@ export default async function PostPage({ params }: Props) {
 
     await prisma.post.update({
       where: { id: params.id },
-      data: { title, content, published },
+      data: {
+        title,
+        content,
+        published,
+        // 4. Используем `set` для полного обновления связей с рубриками
+        categories: {
+          set: categoryIds.map((id) => ({ id })),
+        },
+      },
     });
 
-    revalidatePath(`/blog/${params.id}`); // Обновляем кеш страницы
+    revalidatePath(`/blog/${params.id}`);
+    revalidatePath("/blog"); // Также обновляем главную страницу блога
   }
 
   async function deletePost() {
     "use server";
-    const postToDelete = await prisma.post.findUnique({ where: { id: params.id } });
+    const postToDelete = await prisma.post.findUnique({
+      where: { id: params.id },
+    });
     const currentSession = await auth();
     if (!postToDelete || postToDelete.authorId !== currentSession?.user?.id) {
       throw new Error("Unauthorized");
     }
 
     await prisma.post.delete({ where: { id: params.id } });
-
+    revalidatePath("/blog");
   }
 
   return (
@@ -70,23 +98,40 @@ export default async function PostPage({ params }: Props) {
             </div>
             <span className="text-gray-300 dark:text-gray-600">•</span>
             <time dateTime={post.createdAt.toISOString()}>
-              {new Date(post.createdAt).toLocaleDateString('ru-RU', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
+              {new Date(post.createdAt).toLocaleDateString("ru-RU", {
+                year: "numeric",
+                month: "long",
+                day: "numeric",
               })}
             </time>
           </div>
+          {/* Рубрики поста */}
+          {post.categories.length > 0 && (
+            <div className="flex flex-wrap items-center gap-2 mt-4">
+              {post.categories.map((category) => (
+                <Link
+                  key={category.id}
+                  href={`/blog/category/${category.name}`}
+                  className="px-3 py-1 text-xs font-medium text-blue-800 bg-blue-100         
+      rounded-full dark:bg-blue-900 dark:text-blue-200 hover:bg-blue-200 
+      dark:hover:bg-blue-800 transition-colors"
+                >
+                  {category.name}
+                </Link>
+              ))}
+            </div>
+          )}
         </header>
 
         <div className="prose prose-lg lg:prose-xl max-w-none dark:prose-invert">
           {post.content}
         </div>
 
-        {/* --- РЕНДЕРИМ КОМПОНЕНТ С КНОПКАМИ --- */}
         {isAuthor && (
+          // 5. Передаем `allCategories` в компонент PostActions
           <PostActions
             post={post}
+            allCategories={allCategories} // <-- Передаем все рубрики
             updatePostAction={updatePost}
             deletePostAction={deletePost}
           />

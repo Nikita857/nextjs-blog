@@ -1,7 +1,7 @@
 import { auth } from "@/auth/auth";
 import prisma from "@/utils/prisma";
 import { redirect } from "next/navigation";
-import PostForm from "@/forms/post.form";
+import PostForm from "@/forms/post.form"; // Мы уже используем универсальную форму
 
 export default async function CreatePostPage() {
   const session = await auth();
@@ -10,14 +10,19 @@ export default async function CreatePostPage() {
     redirect("/");
   }
 
+  // 1. Получаем все рубрики из базы данных
+  const allCategories = await prisma.category.findMany();
+
   async function addPost(formData: FormData) {
     "use server";
 
     const title = formData.get("title") as string;
     const content = formData.get("content") as string;
     const published = formData.get("published") === "on";
-    const session = await auth();
+    // 2. Получаем массив id выбранных рубрик
+    const categoryIds = formData.getAll("categoryIds") as string[];
 
+    const session = await auth();
     if (!session?.user?.id) {
       throw new Error("You must be logged in to create a post.");
     }
@@ -29,8 +34,12 @@ export default async function CreatePostPage() {
       data: {
         title,
         content,
-        authorId: session.user.id,
         published,
+        authorId: session.user.id,
+        // 3. Присоединяем выбранные рубрики к посту при создании
+        categories: {
+          connect: categoryIds.map((id) => ({ id })),
+        },
       },
     });
 
@@ -49,7 +58,12 @@ export default async function CreatePostPage() {
               Поделитесь своими мыслями со всем миром.
             </p>
           </header>
-          <PostForm formAction={addPost} buttonText="Опубликовать пост" />
+          {/* 4. Передаем список всех рубрик в форму */}
+          <PostForm 
+            formAction={addPost} 
+            allCategories={allCategories} 
+            buttonText="Опубликовать пост" 
+          />
         </div>
       </div>
     </div>

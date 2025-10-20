@@ -1,15 +1,21 @@
 "use client";
 
-import { Post } from "@/generated/prisma/client";
+import { Category, Post } from "@/generated/prisma/client";
 import { Button, Input, Textarea } from "@heroui/react";
 
 type Props = {
   post?: Post;
   buttonText: string;
+  allCategories: Category[];
   formAction: (formData: FormData) => void;
 };
 
-export default function PostForm({ post, buttonText, formAction }: Props) {
+export default function PostForm({
+  post,
+  buttonText,
+  allCategories,
+  formAction,
+}: Props) {
   return (
     <form action={formAction} className="space-y-8">
       <div>
@@ -53,6 +59,43 @@ export default function PostForm({ post, buttonText, formAction }: Props) {
             input: "text-base focus:outline-none",
           }}
         />
+      </div>
+
+      <div>
+        <label
+          className="block text-sm font-medium text-gray-700 dark:text-gray-300 
+       mb-2"
+        >
+          Рубрики
+        </label>
+        <div
+          className="grid grid-cols-2 md:grid-cols-3 gap-4 rounded-lg bg-gray-100 
+       dark:bg-gray-700/50 p-4"
+        >
+          {allCategories.map((category) => (
+            <div key={category.id} className="flex items-center gap-2">
+              <input
+                id={`category-${category.id}`}
+                name="categoryIds" // У всех чекбоксов одно имя
+                value={category.id} // Значение - это id рубрики
+                type="checkbox"
+                // Отмечаем, если эта рубрика уже есть у поста
+                defaultChecked={
+                  post?.categories?.some((pc) => pc.id === category.id) || false
+                }
+                className="h-4 w-4 rounded border-gray-300 text-blue-600 
+       focus:ring-blue-600"
+              />
+              <label
+                htmlFor={`category-${category.id}`}
+                className="text-sm 
+       text-gray-800 dark:text-gray-200"
+              >
+                {category.name}
+              </label>
+            </div>
+          ))}
+        </div>
       </div>
 
       <div
