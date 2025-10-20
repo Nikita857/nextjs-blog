@@ -1,0 +1,73 @@
+import Link from "next/link";
+import prisma from "@/utils/prisma";
+
+export default async function BlogPage() {
+  const posts = await prisma.post.findMany({
+    orderBy: {
+      createdAt: "desc",
+    },
+    include: {
+      author: {
+        select: {
+          email: true,
+        },
+      },
+    },
+  });
+
+  return (
+    <div className="w-full bg-gray-50 dark:bg-gray-900 flex-grow py-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <header className="text-center mb-12">
+          <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-gray-900 dark:text-gray-100">
+            Наш Блог
+          </h1>
+          <p className="mt-4 text-lg text-gray-500 dark:text-gray-400">
+            Последние статьи и новости от нашей команды.
+          </p>
+        </header>
+
+        {posts.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {posts.map((post) => (
+              <div key={post.id} className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden flex flex-col transition-transform hover:scale-[1.02]">
+                <div className="p-6 flex-grow">
+                  <div className="flex items-center space-x-3 mb-4">
+                    <div className="w-10 h-10 bg-gray-200 dark:bg-gray-600 rounded-full flex-shrink-0"></div>
+                    <div className="text-sm">
+                      <p className="font-medium text-gray-900 dark:text-gray-100">{post.author.email}</p>
+                      <p className="text-gray-500 dark:text-gray-400">
+                        {new Date(post.createdAt).toLocaleDateString('ru-RU', { month: 'long', day: 'numeric' })}
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <h2 className="text-xl font-bold mb-3 text-gray-900 dark:text-gray-100 h-16">
+                    <Link href={`/blog/${post.id}`} className="hover:text-blue-600 transition-colors">
+                      {post.title}
+                    </Link>
+                  </h2>
+
+                  <p className="text-gray-600 dark:text-gray-400 text-base line-clamp-3 h-20">
+                    {post.content}
+                  </p>
+                </div>
+
+                <div className="p-6 bg-gray-50 dark:bg-gray-700/50 mt-auto">
+                  <Link href={`/blog/${post.id}`} className="font-semibold text-blue-600 dark:text-blue-400 hover:underline">
+                    Читать далее →
+                  </Link>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-16">
+            <h2 className="text-2xl font-semibold text-gray-700 dark:text-gray-300">Постов пока нет</h2>
+            <p className="mt-2 text-gray-500">Возвращайтесь позже или создайте первую запись!</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
