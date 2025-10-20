@@ -1,17 +1,17 @@
-'use client';
+"use client";
 
 import { layoutConfig } from "@/config/layout.config";
-import { siteConfig } from "@/config/site_config";
+
 import {
-  Navbar, 
-  NavbarBrand, 
-  NavbarContent, 
-  NavbarItem, 
-  Link, 
-  Button, 
-  NavbarMenuToggle, 
-  NavbarMenu, 
-  NavbarMenuItem
+  Navbar,
+  NavbarBrand,
+  NavbarContent,
+  NavbarItem,
+  Link,
+  Button,
+  NavbarMenuToggle,
+  NavbarMenu,
+  NavbarMenuItem,
 } from "@heroui/react";
 import { usePathname } from "next/navigation";
 import RegistrationModal from "../modals/registration.modal";
@@ -20,6 +20,7 @@ import { useState } from "react";
 import { signOutFunction } from "@/actions/sign-out";
 import { useAuthStore } from "@/store/auth.store";
 import { ThemeSwitcher } from "@/components/common/theme-switcher";
+import { siteConfig } from "@/config/site.config";
 
 export const AcmeLogo = () => {
   return (
@@ -52,7 +53,7 @@ export default function Header() {
   };
 
   return (
-    <Navbar 
+    <Navbar
       className={`h-[${layoutConfig.headerHeight}]
          bg-white
           dark:bg-gray-800 
@@ -78,7 +79,11 @@ export default function Header() {
           const isActive = pathname === item.href;
           return (
             <NavbarItem key={item.href}>
-              <Link color="foreground" href={item.href} className={isActive ? "text-pink-400" : ""}>
+              <Link
+                color="foreground"
+                href={item.href}
+                className={isActive ? "text-pink-400" : ""}
+              >
                 {item.label}
               </Link>
             </NavbarItem>
@@ -88,7 +93,7 @@ export default function Header() {
 
       {/* Right side actions */}
       <NavbarContent justify="end">
-        <ThemeSwitcher/>
+        <ThemeSwitcher />
         {/* Desktop Auth Buttons */}
         <div className="hidden sm:flex items-center gap-2">
           {status === "loading" ? (
@@ -96,12 +101,24 @@ export default function Header() {
           ) : !isAuth ? (
             <>
               <NavbarItem>
-                <Button as={Link} color="secondary" href="#" variant="flat" onPress={() => setIsLoginOpen(true)}>
+                <Button
+                  as={Link}
+                  color="secondary"
+                  href="#"
+                  variant="flat"
+                  onPress={() => setIsLoginOpen(true)}
+                >
                   Войти
                 </Button>
               </NavbarItem>
               <NavbarItem>
-                <Button as={Link} color="primary" href="#" variant="flat" onPress={() => setIsRegistrationOpen(true)}>
+                <Button
+                  as={Link}
+                  color="primary"
+                  href="#"
+                  variant="flat"
+                  onPress={() => setIsRegistrationOpen(true)}
+                >
                   Регистрация
                 </Button>
               </NavbarItem>
@@ -114,14 +131,20 @@ export default function Header() {
                 </Link>
               </NavbarItem>
               <NavbarItem>
-                <Button as={Link} color="secondary" href="#" variant="flat" onPress={handleSignOut}>
+                <Button
+                  as={Link}
+                  color="secondary"
+                  href="#"
+                  variant="flat"
+                  onPress={handleSignOut}
+                >
                   Выйти
                 </Button>
               </NavbarItem>
             </>
           )}
         </div>
-        
+
         {/* Burger Menu Toggle */}
         <NavbarMenuToggle
           aria-label={isMenuOpen ? "Close menu" : "Open menu"}
@@ -144,33 +167,65 @@ export default function Header() {
             </Link>
           </NavbarMenuItem>
         ))}
-        
+
         {/* Mobile Auth Buttons */}
         <NavbarMenuItem>
           {status !== "loading" && !isAuth ? (
             <div className="flex flex-col gap-4 pt-4">
-              <Button color="secondary" variant="flat" onPress={() => { setIsLoginOpen(true); setIsMenuOpen(false); }}>
+              <Button
+                color="secondary"
+                variant="flat"
+                onPress={() => {
+                  setIsLoginOpen(true);
+                  setIsMenuOpen(false);
+                }}
+              >
                 Войти
               </Button>
-              <Button color="primary" variant="flat" onPress={() => { setIsRegistrationOpen(true); setIsMenuOpen(false); }}>
+              <Button
+                color="primary"
+                variant="flat"
+                onPress={() => {
+                  setIsRegistrationOpen(true);
+                  setIsMenuOpen(false);
+                }}
+              >
                 Регистрация
               </Button>
             </div>
-          ) : status !== "loading" && (
-            <div className="flex flex-col gap-4 pt-4">
-              <Button as={Link} href="/blog/create" variant="flat" color="primary" onPress={() => setIsMenuOpen(false)}>
-                Добавить пост
-              </Button>
-              <Button color="danger" variant="flat" onPress={() => { handleSignOut(); setIsMenuOpen(false); }}>
-                Выйти
-              </Button>
-            </div>
+          ) : (
+            status !== "loading" && (
+              <div className="flex flex-col gap-4 pt-4">
+                <Button
+                  as={Link}
+                  href="/blog/create"
+                  variant="flat"
+                  color="primary"
+                  onPress={() => setIsMenuOpen(false)}
+                >
+                  Добавить пост
+                </Button>
+                <Button
+                  color="danger"
+                  variant="flat"
+                  onPress={() => {
+                    handleSignOut();
+                    setIsMenuOpen(false);
+                  }}
+                >
+                  Выйти
+                </Button>
+              </div>
+            )
           )}
         </NavbarMenuItem>
       </NavbarMenu>
 
       {/* Modals */}
-      <RegistrationModal isOpen={isRegistrationOpen} onClose={() => setIsRegistrationOpen(false)} />
+      <RegistrationModal
+        isOpen={isRegistrationOpen}
+        onClose={() => setIsRegistrationOpen(false)}
+      />
       <LoginModal isOpen={isLoginOpen} onClose={() => setIsLoginOpen(false)} />
     </Navbar>
   );

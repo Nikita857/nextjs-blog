@@ -1,8 +1,8 @@
 import { auth } from "@/auth/auth";
 import prisma from "@/utils/prisma";
 import { notFound } from "next/navigation";
-import { revalidatePath } from "next/cache";
 import PostActions from "@/components/blog/post.actions";
+import { deletePost, updatePost } from "@/actions/post.actions";
 import Link from "next/link";
 
 type Props = {
@@ -30,59 +30,17 @@ export default async function PostPage({ params }: Props) {
     notFound();
   }
 
-  // 3. Проверка доступа к неопубликованным постам
   if (!post.published && post.authorId !== session?.user?.id) {
     notFound();
   }
 
   const isAuthor = session?.user?.id === post.authorId;
 
-  async function updatePost(formData: FormData) {
-    "use server";
-    const title = formData.get("title") as string;
-    const content = formData.get("content") as string;
-    const published = formData.get("published") === "on";
-    const categoryIds = formData.getAll("categoryIds") as string[];
-    if (!title || !content) return;
-
-    const postToUpdate = await prisma.post.findUnique({
-      where: { id: params.id },
-    });
-    const currentSession = await auth();
-    if (!postToUpdate || postToUpdate.authorId !== currentSession?.user?.id) {
-      throw new Error("Unauthorized");
-    }
-
-    await prisma.post.update({
-      where: { id: params.id },
-      data: {
-        title,
-        content,
-        published,
-        // 4. Используем `set` для полного обновления связей с рубриками
-        categories: {
-          set: categoryIds.map((id) => ({ id })),
-        },
-      },
-    });
-
-    revalidatePath(`/blog/${params.id}`);
-    revalidatePath("/blog"); // Также обновляем главную страницу блога
-  }
-
-  async function deletePost() {
-    "use server";
-    const postToDelete = await prisma.post.findUnique({
-      where: { id: params.id },
-    });
-    const currentSession = await auth();
-    if (!postToDelete || postToDelete.authorId !== currentSession?.user?.id) {
-      throw new Error("Unauthorized");
-    }
-
-    await prisma.post.delete({ where: { id: params.id } });
-    revalidatePath("/blog");
-  }
+  // 3. Создаем "привязанные" версии экшенов
+  // .bind(null, post.id) создает новую функцию, у которой первый аргумент уже "зафиксирован"
+  // и равен id текущего поста.
+  const updatePostWithId = updatePost.bind(null, post.id);
+  const deletePostWithId = deletePost.bind(null, post.id);
 
   return (
     <article className="w-full max-w-4xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
@@ -132,8 +90,8 @@ export default async function PostPage({ params }: Props) {
           <PostActions
             post={post}
             allCategories={allCategories} // <-- Передаем все рубрики
-            updatePostAction={updatePost}
-            deletePostAction={deletePost}
+            updatePostAction={updatePostWithId}
+            deletePostAction={deletePostWithId}
           />
         )}
       </div>

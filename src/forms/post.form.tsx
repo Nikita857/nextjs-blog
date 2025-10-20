@@ -81,7 +81,7 @@ export default function PostForm({
                 type="checkbox"
                 // Отмечаем, если эта рубрика уже есть у поста
                 defaultChecked={
-                  post?.categories?.some((pc) => pc.id === category.id) || false
+                  post?.categories.some((pc) => pc.id === category.id) || false
                 }
                 className="h-4 w-4 rounded border-gray-300 text-blue-600 
        focus:ring-blue-600"

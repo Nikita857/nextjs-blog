@@ -1,7 +1,8 @@
 import { auth } from "@/auth/auth";
 import prisma from "@/utils/prisma";
 import { redirect } from "next/navigation";
-import PostForm from "@/forms/post.form"; // Мы уже используем универсальную форму
+import PostForm from "@/forms/post.form";
+import { addPost } from "@/actions/post.actions";
 
 export default async function CreatePostPage() {
   const session = await auth();
@@ -10,41 +11,7 @@ export default async function CreatePostPage() {
     redirect("/");
   }
 
-  // 1. Получаем все рубрики из базы данных
   const allCategories = await prisma.category.findMany();
-
-  async function addPost(formData: FormData) {
-    "use server";
-
-    const title = formData.get("title") as string;
-    const content = formData.get("content") as string;
-    const published = formData.get("published") === "on";
-    // 2. Получаем массив id выбранных рубрик
-    const categoryIds = formData.getAll("categoryIds") as string[];
-
-    const session = await auth();
-    if (!session?.user?.id) {
-      throw new Error("You must be logged in to create a post.");
-    }
-    if (!title || !content) {
-      return;
-    }
-
-    await prisma.post.create({
-      data: {
-        title,
-        content,
-        published,
-        authorId: session.user.id,
-        // 3. Присоединяем выбранные рубрики к посту при создании
-        categories: {
-          connect: categoryIds.map((id) => ({ id })),
-        },
-      },
-    });
-
-    redirect("/blog");
-  }
 
   return (
     <div className="w-full bg-gray-50 dark:bg-gray-900 flex-grow py-12">
@@ -59,10 +26,10 @@ export default async function CreatePostPage() {
             </p>
           </header>
           {/* 4. Передаем список всех рубрик в форму */}
-          <PostForm 
-            formAction={addPost} 
-            allCategories={allCategories} 
-            buttonText="Опубликовать пост" 
+          <PostForm
+            formAction={addPost}
+            allCategories={allCategories}
+            buttonText="Опубликовать пост"
           />
         </div>
       </div>
