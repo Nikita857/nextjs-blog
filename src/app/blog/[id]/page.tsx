@@ -3,7 +3,6 @@ import prisma from "@/utils/prisma";
 import { notFound } from "next/navigation";
 import PostActions from "@/components/blog/post.actions";
 import { deletePost, updatePost } from "@/actions/post.actions";
-import ReactionButtons from "@/components/blog/reaction-buttons";
 import { ReactionType } from "@/generated/prisma";
 import Link from "next/link";
 import Image from "next/image";
@@ -103,9 +102,10 @@ export default async function PostPage({ params }: Props) {
           )}
         </header>
 
-        <div className="prose prose-lg lg:prose-xl max-w-none dark:prose-invert">
-          {post.content}
-        </div>
+        <div
+          className="prose prose-lg lg:prose-xl max-w-none dark:prose-invert"
+          dangerouslySetInnerHTML={{ __html: post.content || "" }}
+        ></div>
 
         <div
           className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700 flex 

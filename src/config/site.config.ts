@@ -1,5 +1,5 @@
 export const siteConfig = {
-    title: "помойный блог",
+    title: "михалыч карпушко",
     navItems: [
         {href: "/", label: "Главная" },
         {href: "/blog", label: "Блог" },

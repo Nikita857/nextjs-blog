@@ -77,15 +77,22 @@ export default async function BlogPage() {
                   </p>
                   {post.categories.length > 0 && (
                     <div className="flex flex-wrap items-center gap-2 mt-4">
-                      {post.categories.map((category) => (
-                        <span
-                          key={category.id}
-                          className="px-2 py-1 text-xs font-medium text-gray-800 bg-gray-100       
-      rounded-full dark:bg-gray-700 dark:text-gray-200"
-                        >
-                          {category.name}
-                        </span>
-                      ))}
+                      {/* Рубрики поста */}
+                      {post.categories.length > 0 && (
+                        <div className="flex flex-wrap items-center gap-2 mt-4">
+                          {post.categories.map((category) => (
+                            <Link
+                              key={category.id}
+                              href={`/blog/category/${category.name}`}
+                              className="px-3 py-1 text-xs font-medium text-blue-800 bg-blue-100         
+                                         rounded-full dark:bg-blue-900 dark:text-blue-200 hover:bg-blue-200 
+                                        dark:hover:bg-blue-800 transition-colors"
+                            >
+                              {category.name}
+                            </Link>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
