@@ -1,9 +1,11 @@
+/* eslint-disable react/jsx-no-undef */
 import { auth } from "@/auth/auth";
 import prisma from "@/utils/prisma";
 import { notFound } from "next/navigation";
 import PostActions from "@/components/blog/post.actions";
 import { deletePost, updatePost } from "@/actions/post.actions";
 import Link from "next/link";
+import Image from "next/image";
 
 type Props = {
   params: {
@@ -18,7 +20,7 @@ export default async function PostPage({ params }: Props) {
   const post = await prisma.post.findUnique({
     where: { id: params.id },
     include: {
-      author: { select: { email: true } },
+      author: { select: { email: true, image: true, name: true } },
       categories: true, // <-- Включаем рубрики поста
     },
   });
@@ -51,7 +53,13 @@ export default async function PostPage({ params }: Props) {
           </h1>
           <div className="flex items-center space-x-4 text-sm text-gray-500 dark:text-gray-400">
             <div className="flex items-center space-x-2">
-              <div className="w-9 h-9 bg-gray-200 dark:bg-gray-600 rounded-full flex-shrink-0"></div>
+              <Image
+                src={post.author.image || "/file.svg"}
+                alt={post.author.name || post.author.email}
+                width={36}
+                height={36}
+                className="w-9 h-9 rounded-full object-cover flex-shrink-0"
+              />
               <span className="font-medium">{post.author.email}</span>
             </div>
             <span className="text-gray-300 dark:text-gray-600">•</span>
@@ -86,10 +94,9 @@ export default async function PostPage({ params }: Props) {
         </div>
 
         {isAuthor && (
-          // 5. Передаем `allCategories` в компонент PostActions
           <PostActions
             post={post}
-            allCategories={allCategories} // <-- Передаем все рубрики
+            allCategories={allCategories}
             updatePostAction={updatePostWithId}
             deletePostAction={deletePostWithId}
           />

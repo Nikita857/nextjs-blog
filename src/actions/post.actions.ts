@@ -5,9 +5,10 @@ import prisma from "@/utils/prisma";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
+/**
+ * Создает новый пост в базе данных.
+ */
 export async function addPost(formData: FormData) {
-  "use server";
-
   const title = formData.get("title") as string;
   const content = formData.get("content") as string;
   const published = formData.get("published") === "on";
@@ -15,10 +16,10 @@ export async function addPost(formData: FormData) {
 
   const session = await auth();
   if (!session?.user?.id) {
-    throw new Error("You must be logged in to create a post.");
+    throw new Error("Unauthorized");
   }
   if (!title || !content) {
-    return;
+    throw new Error("Title and content are required");
   }
 
   await prisma.post.create({
@@ -36,20 +37,19 @@ export async function addPost(formData: FormData) {
   redirect("/blog");
 }
 
+/**
+ * Обновляет существующий пост по его ID.
+ */
 export async function updatePost(postId: string, formData: FormData) {
-  "use server";
   const title = formData.get("title") as string;
   const content = formData.get("content") as string;
   const published = formData.get("published") === "on";
   const categoryIds = formData.getAll("categoryIds") as string[];
-  if (!title || !content) return;
 
-  const postToUpdate = await prisma.post.findUnique({
-    where: { id: postId },
-  });
-  const currentSession = await auth();
-  if (!postToUpdate || postToUpdate.authorId !== currentSession?.user?.id) {
-    throw new Error("Unauthorized");
+  const session = await auth();
+  const postToUpdate = await prisma.post.findUnique({ where: { id: postId } });
+  if (!postToUpdate || postToUpdate.authorId !== session?.user?.id) {
+    throw new Error("Unauthorized or post not found");
   }
 
   await prisma.post.update({
@@ -58,7 +58,6 @@ export async function updatePost(postId: string, formData: FormData) {
       title,
       content,
       published,
-      // 4. Используем `set` для полного обновления связей с рубриками
       categories: {
         set: categoryIds.map((id) => ({ id })),
       },
@@ -66,32 +65,39 @@ export async function updatePost(postId: string, formData: FormData) {
   });
 
   revalidatePath(`/blog/${postId}`);
-  revalidatePath("/blog"); // Также обновляем главную страницу блога
-}
-
-export async function deletePost(postId: string) {
-  "use server";
-  const postToDelete = await prisma.post.findUnique({
-    where: { id: postId },
-  });
-  const currentSession = await auth();
-  if (!postToDelete || postToDelete.authorId !== currentSession?.user?.id) {
-    throw new Error("Unauthorized");
-  }
-
-  await prisma.post.delete({ where: { id: postId } });
   revalidatePath("/blog");
 }
 
+/**
+ * Удаляет пост по его ID.
+ */
+export async function deletePost(postId: string) {
+  const session = await auth();
+  const postToDelete = await prisma.post.findUnique({ where: { id: postId } });
+  if (!postToDelete || postToDelete.authorId !== session?.user?.id) {
+    throw new Error("Unauthorized or post not found");
+  }
+
+  await prisma.post.delete({ where: { id: postId } });
+
+  revalidatePath("/blog");
+  redirect("/blog");
+}
+
+/**
+ * Получает опубликованные посты.
+ * Если указано имя рубрики, фильтрует посты по ней.
+ */
 export async function getPublishedPosts(options: {
   categoryName?: string;
   limit?: number;
 }) {
-  const { categoryName, limit } = options;
+  const { categoryName, limit = 5 } = options;
 
   const whereClause = {
     published: true,
     ...(categoryName && {
+      // Если categoryName передан, добавляем это условие
       categories: {
         some: {
           name: categoryName,
@@ -106,13 +112,13 @@ export async function getPublishedPosts(options: {
       orderBy: { createdAt: "desc" },
       take: limit,
       include: {
-        author: { select: { email: true } },
+        author: { select: { email: true, image: true, name: true } },
         categories: true,
       },
     });
     return posts;
   } catch (error) {
-    console.error("Failde to get posts", error);
+    console.error("Failed to get posts:", error);
     return [];
   }
 }

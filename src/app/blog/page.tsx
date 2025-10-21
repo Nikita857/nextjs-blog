@@ -1,5 +1,6 @@
 import Link from "next/link";
 import prisma from "@/utils/prisma";
+import Image from "next/image";
 
 export default async function BlogPage() {
   const posts = await prisma.post.findMany({
@@ -13,6 +14,8 @@ export default async function BlogPage() {
       author: {
         select: {
           email: true,
+          image: true,
+          name: true,
         },
       },
       categories: true,
@@ -40,7 +43,13 @@ export default async function BlogPage() {
               >
                 <div className="p-6 flex-grow">
                   <div className="flex items-center space-x-3 mb-4">
-                    <div className="w-10 h-10 bg-gray-200 dark:bg-gray-600 rounded-full flex-shrink-0"></div>
+                    <Image
+                      src={post.author.image || "/file.svg"}
+                      alt={post.author.name || post.author.email}
+                      width={36}
+                      height={36}
+                      className="w-9 h-9 rounded-full object-cover flex-shrink-0"
+                    />
                     <div className="text-sm">
                       <p className="font-medium text-gray-900 dark:text-gray-100">
                         {post.author.email}
