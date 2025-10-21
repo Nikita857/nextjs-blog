@@ -54,8 +54,7 @@ export default function PostsTable({ userPosts, allCategories }: Props) {
                     post={post}
                     allCategories={allCategories}
                     updatePostAction={updatePostWithId}
-                    deletePostAction={deletePostWithId}
-                  />
+                    deletePostAction={deletePostWithId} initialLikes={0} initialDislikes={0} currentUserReaction={null}                  />
                 </div>
               </div>
             );

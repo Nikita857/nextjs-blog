@@ -9,7 +9,7 @@ export default async function HomePage() {
     take: 5,
     include: {
       author: { select: { email: true, image: true } },
-      categories: true,
+      categories: true
     },
   });
 

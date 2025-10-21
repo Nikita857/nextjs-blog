@@ -1,11 +1,11 @@
 "use client";
-
+import { Image } from "@heroui/react";
 import { useState, useTransition } from "react";
 import Link from "next/link";
 import { Input, Button } from "@heroui/react";
 import { getPublishedPosts } from "@/actions/post.actions";
 import { Category, Post } from "@/generated/prisma/client";
-import Image from "next/image";
+
 
 // Определяем более детальный тип для постов, включая связанные данные
 type PostWithRelations = Post & {
@@ -87,7 +87,7 @@ export function HomePageClient({ initialPosts, allCategories }: Props) {
                       />
                       <div className="text-sm">
                         <p className="font-medium text-gray-900 dark:text-gray-100">
-                          {post.author.name || post.author.email}
+                          {post.author.email}
                         </p>
                         <p className="text-gray-500 dark:text-gray-400">
                           {new Date(post.createdAt).toLocaleDateString(

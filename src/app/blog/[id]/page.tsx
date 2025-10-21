@@ -22,9 +22,9 @@ export default async function PostPage({ params }: Props) {
     include: {
       author: { select: { email: true, image: true, name: true } },
       categories: true, // <-- Включаем рубрики поста
-      reaction: {
-        include: { user: true },
-      },
+      reactions: {
+        include: {user: true}
+      }
     },
   });
 
@@ -47,14 +47,15 @@ export default async function PostPage({ params }: Props) {
   const updatePostWithId = updatePost.bind(null, post.id);
   const deletePostWithId = deletePost.bind(null, post.id);
 
-  const initialLikes = post.reaction.filter(
+
+  const initialLikes = post.reactions.filter(
     (r) => r.type === ReactionType.LIKE
   ).length;
-  const initialDislikes = post.reaction.filter(
+  const initialDislikes = post.reactions.filter(
     (r) => r.type === ReactionType.DISLIKE
   ).length;
   const currentUserReaction = session?.user?.id
-    ? post.reaction.find((r) => r.user.id === session.user?.id)?.type || null
+    ? post.reactions.find((r) => r.user.id === session.user?.id)?.type || null
     : null;
 
   return (

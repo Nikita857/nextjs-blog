@@ -9,17 +9,19 @@ datasource db {
 }
 
 model User {
-  id        String     @id @default(uuid())
-  name      String?
-  email     String     @unique
-  password  String
-  image     String?
-  accounts  Account[]
-  sessions  Session[]
-  createdAt DateTime   @default(now()) @map("created_at")
-  updatedAt DateTime   @updatedAt @map("updated_at")
-  posts     Post[]
-  reaction  Reaction[]
+  id                    String       @id @default(uuid())
+  name                  String?
+  email                 String       @unique
+  password              String
+  image                 String?
+  accounts              Account[]
+  sessions              Session[]
+  createdAt             DateTime     @default(now()) @map("created_at")
+  updatedAt             DateTime     @updatedAt @map("updated_at")
+  posts                 Post[]
+  reactions             Reaction[]   // Исправлено: reaction -> reactions (множественное число)
+  sentFriendRequests    Friendship[] @relation("SentFriendRequests") // Исправлено имя отношения
+  receivedFriendRequests Friendship[] @relation("ReceivedFriendRequests") // Исправлено имя отношения
 
   @@map("users")
 }
@@ -29,20 +31,21 @@ model Account {
   type              String
   provider          String
   providerAccountId String
-  refresh_token     String?
-  access_token      String?
+  refresh_token     String?   @db.Text
+  access_token      String?   @db.Text
   expires_at        Int?
   token_type        String?
   scope             String?
-  id_token          String?
+  id_token          String?   @db.Text
   session_state     String?
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@id([provider, providerAccountId])
+  @@map("accounts")
 }
 
 model Session {
@@ -51,8 +54,10 @@ model Session {
   expires      DateTime
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("sessions")
 }
 
 model VerificationToken {
@@ -61,19 +66,20 @@ model VerificationToken {
   expires    DateTime
 
   @@id([identifier, token])
+  @@map("verification_tokens")
 }
 
 model Post {
   id         String     @id @default(uuid())
   title      String
-  content    String?
+  content    String?    @db.Text  // Добавлен @db.Text для длинного текста
   published  Boolean    @default(false)
   createdAt  DateTime   @default(now()) @map("created_at")
   updatedAt  DateTime   @updatedAt @map("updated_at")
   authorId   String
-  author     User       @relation(fields: [authorId], references: [id])
-  categories Category[]
-  reaction   Reaction[]
+  author     User       @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  categories Category[] // Добавлен onDelete: Cascade
+  reactions  Reaction[] // Исправлено: reaction -> reactions
 
   @@map("posts")
 }
@@ -82,6 +88,8 @@ model Category {
   id    String @id @default(uuid())
   name  String @unique
   posts Post[]
+
+  @@map("categories")
 }
 
 enum ReactionType {
@@ -92,12 +100,33 @@ enum ReactionType {
 model Reaction {
   id        String       @id @default(uuid())
   userId    String
-  user      User         @relation(fields: [userId], references: [id])
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   postId    String
   post      Post         @relation(fields: [postId], references: [id], onDelete: Cascade)
   type      ReactionType
-  createdAt DateTime     @default(now())
+  createdAt DateTime     @default(now()) @map("created_at")
 
-  @@unique([userId, postId])// Пользователь может оставить только одну реакцию на пост
+  @@unique([userId, postId])
   @@map("reactions")
+}
+
+enum FriendshipStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  BLOCKED
+}
+
+model Friendship {
+  id           String           @id @default(uuid())
+  senderId     String
+  sender       User             @relation("SentFriendRequests", fields: [senderId], references: [id], onDelete: Cascade)
+  receiverId   String
+  receiver     User             @relation("ReceivedFriendRequests", fields: [receiverId], references: [id], onDelete: Cascade)
+  status       FriendshipStatus @default(PENDING)
+  createdAt    DateTime         @default(now()) @map("created_at")  // Добавлен @default(now())
+  updatedAt    DateTime         @updatedAt @map("updated_at")
+
+  @@unique([senderId, receiverId])
+  @@map("friendships")
 }
