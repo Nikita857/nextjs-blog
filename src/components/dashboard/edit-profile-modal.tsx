@@ -1,10 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import type { User } from "@prisma/client";
 import { Button } from "@heroui/react";
 import CustomModal from "@/components/common/modal";
 import ProfileCard from "./profile-card"; // Наша форма профиля
+import { User } from "@/generated/prisma";
+
 
 type Props = {
   user: User;
