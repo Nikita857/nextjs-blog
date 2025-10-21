@@ -5,13 +5,17 @@ import { useState } from "react";
 import { Button } from "@heroui/react";
 import CustomModal from "../common/modal";
 import PostForm from "@/forms/post.form";
-import { Category, Post } from "@/generated/prisma/client";
+import { Category, Post, ReactionType } from "@/generated/prisma/client";
+import ReactionButtons from "./reaction-buttons";
 
 type Props = {
   post: Post & { categories: Category[] };
   allCategories: Category[];
   updatePostAction: (formData: FormData) => void;
   deletePostAction: () => void;
+  initialLikes: number;
+  initialDislikes: number;
+  currentUserReaction: ReactionType | null;
 };
 
 export default function PostActions({
@@ -19,6 +23,9 @@ export default function PostActions({
   allCategories,
   updatePostAction,
   deletePostAction,
+  initialLikes,
+  initialDislikes,
+  currentUserReaction,
 }: Props) {
   const [isModalOpen, setModalOpen] = useState(false);
 
@@ -29,37 +36,49 @@ export default function PostActions({
 
   return (
     <footer
-      className="mt-10 pt-6 border-t border-gray-200 dark:border-gray-700 flex items-center justify-end 
-      gap-4"
+      className="mt-8 pt-6
+        dark:border-gray-700
+         flex items-center
+         justify-between
+         gap-5"
     >
-      <Button
-        variant="flat"
-        color="secondary"
-        onPress={() => setModalOpen(true)}
-      >
-        Редактировать
-      </Button>
+      <div>
+        <ReactionButtons
+          postId={post.id}
+          initialLikes={initialLikes}
+          initialDislikes={initialDislikes}
+          initialUserReaction={currentUserReaction}
+        />
+      </div>
 
-      <form action={deletePostAction}>
-        <Button type="submit" variant="flat" color="danger">
-          Удалить
+      <div className="flex items-center gap-4">
+        <Button
+          variant="flat"
+          color="secondary"
+          onPress={() => setModalOpen(true)}
+        >
+          Редактировать
         </Button>
-      </form>
-
+        <form action={deletePostAction}>
+          <Button type="submit" variant="flat" color="danger">
+            Удалить
+          </Button>
+        </form>
+      </div>
       <CustomModal
-        isOpen={isModalOpen}
-        onClose={() => setModalOpen(false)}
-        title="Редактирование поста"
-        size="xl"
-      >
-        {/* 2. Вызываем PostForm и передаем ей нужные пропсы */}
-        <PostForm
-          post={post}
-          formAction={handleUpdate}
-          allCategories={allCategories} // <-- Передаем дальше
-          buttonText="Сохранить изменения"
-        />{" "}
-      </CustomModal>
+          isOpen={isModalOpen}
+          onClose={() => setModalOpen(false)}
+          title="Редактирование поста"
+          size="xl"
+        >
+          {/* 2. Вызываем PostForm и передаем ей нужные пропсы */}
+          <PostForm
+            post={post}
+            formAction={handleUpdate}
+            allCategories={allCategories} // <-- Передаем дальше
+            buttonText="Сохранить изменения"
+          />{" "}
+        </CustomModal>
     </footer>
   );
 }

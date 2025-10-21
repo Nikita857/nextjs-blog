@@ -9,16 +9,17 @@ datasource db {
 }
 
 model User {
-  id        String    @id @default(uuid())
+  id        String     @id @default(uuid())
   name      String?
-  email     String    @unique
+  email     String     @unique
   password  String
   image     String?
   accounts  Account[]
   sessions  Session[]
-  createdAt DateTime  @default(now()) @map("created_at")
-  updatedAt DateTime  @updatedAt @map("updated_at")
+  createdAt DateTime   @default(now()) @map("created_at")
+  updatedAt DateTime   @updatedAt @map("updated_at")
   posts     Post[]
+  reaction  Reaction[]
 
   @@map("users")
 }
@@ -72,6 +73,7 @@ model Post {
   authorId   String
   author     User       @relation(fields: [authorId], references: [id])
   categories Category[]
+  reaction   Reaction[]
 
   @@map("posts")
 }
@@ -80,4 +82,22 @@ model Category {
   id    String @id @default(uuid())
   name  String @unique
   posts Post[]
+}
+
+enum ReactionType {
+  LIKE
+  DISLIKE
+}
+
+model Reaction {
+  id        String       @id @default(uuid())
+  userId    String
+  user      User         @relation(fields: [userId], references: [id])
+  postId    String
+  post      Post         @relation(fields: [postId], references: [id])
+  type      ReactionType
+  createdAt DateTime     @default(now())
+
+  @@unique([userId, postId])// Пользователь может оставить только одну реакцию на пост
+  @@map("reactions")
 }

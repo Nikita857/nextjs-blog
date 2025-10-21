@@ -1,9 +1,10 @@
-/* eslint-disable react/jsx-no-undef */
 import { auth } from "@/auth/auth";
 import prisma from "@/utils/prisma";
 import { notFound } from "next/navigation";
 import PostActions from "@/components/blog/post.actions";
 import { deletePost, updatePost } from "@/actions/post.actions";
+import ReactionButtons from "@/components/blog/reaction-buttons";
+import { ReactionType } from "@/generated/prisma";
 import Link from "next/link";
 import Image from "next/image";
 
@@ -22,6 +23,9 @@ export default async function PostPage({ params }: Props) {
     include: {
       author: { select: { email: true, image: true, name: true } },
       categories: true, // <-- Включаем рубрики поста
+      reaction: {
+        include: { user: true },
+      },
     },
   });
 
@@ -43,6 +47,16 @@ export default async function PostPage({ params }: Props) {
   // и равен id текущего поста.
   const updatePostWithId = updatePost.bind(null, post.id);
   const deletePostWithId = deletePost.bind(null, post.id);
+
+  const initialLikes = post.reaction.filter(
+    (r) => r.type === ReactionType.LIKE
+  ).length;
+  const initialDislikes = post.reaction.filter(
+    (r) => r.type === ReactionType.DISLIKE
+  ).length;
+  const currentUserReaction = session?.user?.id
+    ? post.reaction.find((r) => r.user.id === session.user?.id)?.type || null
+    : null;
 
   return (
     <article className="w-full max-w-4xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
@@ -93,14 +107,22 @@ export default async function PostPage({ params }: Props) {
           {post.content}
         </div>
 
-        {isAuthor && (
-          <PostActions
-            post={post}
-            allCategories={allCategories}
-            updatePostAction={updatePostWithId}
-            deletePostAction={deletePostWithId}
-          />
-        )}
+        <div
+          className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700 flex 
+       justify-between items-center"
+        >
+          {isAuthor && (
+            <PostActions
+              post={post}
+              allCategories={allCategories}
+              updatePostAction={updatePostWithId}
+              deletePostAction={deletePostWithId}
+              initialDislikes={initialDislikes}
+              initialLikes={initialLikes}
+              currentUserReaction={currentUserReaction}
+            />
+          )}
+        </div>
       </div>
     </article>
   );

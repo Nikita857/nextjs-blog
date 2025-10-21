@@ -3,7 +3,9 @@
 import { auth } from "@/auth/auth";
 import prisma from "@/utils/prisma";
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
+import { redirect, unauthorized } from "next/navigation";
+import { ReactionType } from "@/generated/prisma";
+import { error } from "console";
 
 /**
  * Создает новый пост в базе данных.
@@ -121,4 +123,70 @@ export async function getPublishedPosts(options: {
     console.error("Failed to get posts:", error);
     return [];
   }
+}
+
+export async function toggleReaction(postId: string, reactionType: ReactionType) {
+    const session = await auth();
+    if(!session?.user?.id) {
+        return {error: "Unauthorized"};
+    }
+
+    const userId = session?.user?.id;
+
+    try {
+        const existingReaction = await prisma.reaction.findUnique({
+            where: {
+                userId_postId: {
+                    userId: userId,
+                    postId: postId,
+                },
+            },
+        });
+
+        if(existingReaction) {
+            if(existingReaction.type === reactionType) {
+                await prisma.reaction.delete({
+                    where:{id: existingReaction.id},
+                });
+            } else {
+                await prisma.reaction.update({
+                    where: {id: existingReaction.id},
+                    data: {type: reactionType}
+                });
+            }
+        }else {
+            await prisma.reaction.create({
+                data: {
+                    userId: userId,
+                    postId: postId,
+                    type: reactionType,
+                },
+            });
+        }
+
+        const likes = await prisma.reaction.count({
+            where: {
+                postId: postId,
+                type: ReactionType.LIKE,
+            },
+        });
+
+        const dislikes = await prisma.reaction.count({
+            where: {
+                postId: postId,
+                type: ReactionType.DISLIKE,
+            },
+        });
+
+        // Сброс кэша страницы
+
+        revalidatePath(`/blog/${postId}`);
+        revalidatePath("/blog");
+        revalidatePath("/");
+
+        return {likes, dislikes, userReaction: existingReaction?.type === reactionType ? null: reactionType}
+    } catch (error) {
+        console.error("Failed to toggle reaction", error);
+        return {error: "Failed to process reaction"};
+    }
 }
