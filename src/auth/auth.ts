@@ -3,6 +3,12 @@ import Credentials from "next-auth/providers/credentials";
 import { getUserFromDb } from "@/utils/user";
 import { signInSchema } from "@/schema/zod";
 import bcryptjs from "bcryptjs";
+import jwt from "jsonwebtoken"; // Добавляем импорт jsonwebtoken
+
+const NEXTAUTH_SECRET = process.env.NEXTAUTH_SECRET;
+if (!NEXTAUTH_SECRET) {
+  throw new Error("NEXTAUTH_SECRET is not defined. Please set it in your .env.local file.");
+}
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   providers: [
@@ -47,7 +53,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   session: {
     strategy: "jwt",
   },
-  secret: process.env.NEXTAUTH_SECRET,
+  secret: NEXTAUTH_SECRET, // Используем проверенную переменную
   callbacks: {
     // Вызывается при создании/обновлении JWT
     async jwt({ token, user }) {
@@ -63,6 +69,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (session.user) {
         session.user.id = token.id as string;
       }
+      // Добавляем JWT токен в сессию для использования на WebSocket
+      session.accessToken = jwt.sign(token, NEXTAUTH_SECRET); // Генерируем JWT напрямую, без expiresIn 
       return session;
     },
   },

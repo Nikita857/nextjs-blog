@@ -1,5 +1,6 @@
 "use client";
-
+import { useRouter } from "next/navigation";
+import { createConversation } from "@/actions/chat.actions";
 import { useState, useTransition } from "react";
 import Image from "next/image";
 import { Input, Button } from "@heroui/react";
@@ -12,7 +13,6 @@ import {
 } from "@/actions/user.action";
 import { Friendship, FriendshipStatus } from "@/generated/prisma";
 
-
 // Определяем тип для пользователя, который возвращается из поиска или списка друзей
 type PartialUser = {
   id: string;
@@ -21,7 +21,7 @@ type PartialUser = {
   image: string | null;
 };
 
-type FriendUser = PartialUser & {friendshipId: string};
+type FriendUser = PartialUser & { friendshipId: string };
 
 // Расширяем PartialUser для отображения статуса дружбы
 type UserWithStatus = PartialUser & {
@@ -43,10 +43,31 @@ export default function FriendsPageClient({
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<UserWithStatus[]>([]);
   const [friends, setFriends] = useState<FriendUser[]>(initialFriends); // Состояние друзей тоже PartialUser
-  const [pendingIncoming, setPendingIncoming] = useState(initialPendingIncomingRequests);
-  const [pendingOutgoing, setPendingOutgoing] = useState(initialPendingOutgoingRequests);
+  const [pendingIncoming, setPendingIncoming] = useState(
+    initialPendingIncomingRequests
+  );
+  const [pendingOutgoing, setPendingOutgoing] = useState(
+    initialPendingOutgoingRequests
+  );
   const [isSearching, startSearchTransition] = useTransition();
   const [isActionPending, startActionTransition] = useTransition();
+
+  const router = useRouter();
+
+  const handleStartChat = async (otherUserId: string) => {
+    startActionTransition(async () => {
+      try {
+        const conversation = await createConversation(otherUserId);
+        if (conversation?.id) {
+          router.push(`/chat?conversationId=${conversation.id}`);
+        } else {
+          console.error("Failde to create or find conversation.");
+        }
+      } catch (error) {
+        console.error("Error starting chat", error);
+      }
+    });
+  };
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -61,13 +82,18 @@ export default function FriendsPageClient({
       }
       // Добавляем статус дружбы к результатам поиска
       const usersWithStatus = result.users!.map((user: PartialUser) => {
-        const isFriend = friends.some(f => f.id === user.id);
-        const isPendingIncoming = pendingIncoming.some(f => f.sender.id === user.id);
-        const isPendingOutgoing = pendingOutgoing.some(f => f.receiver.id === user.id);
+        const isFriend = friends.some((f) => f.id === user.id);
+        const isPendingIncoming = pendingIncoming.some(
+          (f) => f.sender.id === user.id
+        );
+        const isPendingOutgoing = pendingOutgoing.some(
+          (f) => f.receiver.id === user.id
+        );
 
         let status: FriendshipStatus | undefined;
         if (isFriend) status = FriendshipStatus.ACCEPTED;
-        else if (isPendingIncoming || isPendingOutgoing) status = FriendshipStatus.PENDING;
+        else if (isPendingIncoming || isPendingOutgoing)
+          status = FriendshipStatus.PENDING;
 
         return { ...user, friendshipStatus: status };
       });
@@ -79,7 +105,7 @@ export default function FriendsPageClient({
     startActionTransition(async () => {
       const result = await sendFriendRequest(receiverId);
       if (result.success) {
-        window.location.reload(); 
+        window.location.reload();
       }
       console.log(result);
     });
@@ -142,9 +168,14 @@ export default function FriendsPageClient({
 
           {searchResults.length > 0 && (
             <div className="space-y-3">
-              <h3 className="font-semibold text-gray-700 dark:text-gray-300">Результаты поиска:</h3>
+              <h3 className="font-semibold text-gray-700 dark:text-gray-300">
+                Результаты поиска:
+              </h3>
               {searchResults.map((user) => (
-                <div key={user.id} className="flex items-center justify-between bg-gray-50 dark:bg-gray-700/50 p-3 rounded-lg">
+                <div
+                  key={user.id}
+                  className="flex items-center justify-between bg-gray-50 dark:bg-gray-700/50 p-3 rounded-lg"
+                >
                   <div className="flex items-center gap-3">
                     <Image
                       src={user.image || "/file.svg"}
@@ -154,23 +185,42 @@ export default function FriendsPageClient({
                       className="rounded-full object-cover"
                     />
                     <div>
-                      <p className="font-medium text-gray-900 dark:text-gray-100">{user.name || user.email}</p>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">{user.email}</p>
+                      <p className="font-medium text-gray-900 dark:text-gray-100">
+                        {user.name || user.email}
+                      </p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        {user.email}
+                      </p>
                     </div>
                   </div>
+
                   {user.friendshipStatus === FriendshipStatus.PENDING ? (
-                    <span className="text-sm text-gray-500">Запрос отправлен</span>
+                    <span className="text-sm text-gray-500">
+                      Запрос отправлен
+                    </span>
                   ) : user.friendshipStatus === FriendshipStatus.ACCEPTED ? (
-                    <span className="text-sm text-green-600">Друзья</span>
-                  ) : (user.id !== friends.find(f => f.id === user.id)?.id && // Проверяем, что это не текущий друг
-                    <Button
-                      size="sm"
-                      color="primary"
-                      onPress={() => handleSendRequest(user.id)}
-                      disabled={isActionPending}
-                    >
-                      Добавить в друзья
-                    </Button>
+                    <div className="flex gap-2">
+                      <span className="text-sm text-green-600">Друзья</span>
+                      <Button
+                        size="sm"
+                        color="secondary"
+                        onPress={() => handleStartChat(user.id)}
+                        disabled={isActionPending}
+                      >
+                        Начать чат
+                      </Button>
+                    </div>
+                  ) : (
+                    user.id !== friends.find((f) => f.id === user.id)?.id && ( // Проверяем, что это не текущий друг
+                      <Button
+                        size="sm"
+                        color="primary"
+                        onPress={() => handleSendRequest(user.id)}
+                        disabled={isActionPending}
+                      >
+                        Добавить в друзья
+                      </Button>
+                    )
                   )}
                 </div>
               ))}
@@ -186,18 +236,29 @@ export default function FriendsPageClient({
             </h2>
             <div className="space-y-3">
               {pendingIncoming.map((friendship) => (
-                <div key={friendship.id} className="flex items-center justify-between bg-gray-50 dark:bg-gray-700/50 p-3 rounded-lg">
+                <div
+                  key={friendship.id}
+                  className="flex items-center justify-between bg-gray-50 dark:bg-gray-700/50 p-3 rounded-lg"
+                >
                   <div className="flex items-center gap-3">
                     <Image
                       src={friendship.sender.image || "/file.svg"}
-                      alt={friendship.sender.name || friendship.sender.email || "User avatar"}
+                      alt={
+                        friendship.sender.name ||
+                        friendship.sender.email ||
+                        "User avatar"
+                      }
                       width={40}
                       height={40}
                       className="rounded-full object-cover"
                     />
                     <div>
-                      <p className="font-medium text-gray-900 dark:text-gray-100">{friendship.sender.name || friendship.sender.email}</p>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">{friendship.sender.email}</p>
+                      <p className="font-medium text-gray-900 dark:text-gray-100">
+                        {friendship.sender.name || friendship.sender.email}
+                      </p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        {friendship.sender.email}
+                      </p>
                     </div>
                   </div>
                   <div className="flex gap-2">
@@ -232,18 +293,29 @@ export default function FriendsPageClient({
             </h2>
             <div className="space-y-3">
               {pendingOutgoing.map((friendship) => (
-                <div key={friendship.id} className="flex items-center justify-between bg-gray-50 dark:bg-gray-700/50 p-3 rounded-lg">
+                <div
+                  key={friendship.id}
+                  className="flex items-center justify-between bg-gray-50 dark:bg-gray-700/50 p-3 rounded-lg"
+                >
                   <div className="flex items-center gap-3">
                     <Image
                       src={friendship.receiver.image || "/file.svg"}
-                      alt={friendship.receiver.name || friendship.receiver.email || "User avatar"}
+                      alt={
+                        friendship.receiver.name ||
+                        friendship.receiver.email ||
+                        "User avatar"
+                      }
                       width={40}
                       height={40}
                       className="rounded-full object-cover"
                     />
                     <div>
-                      <p className="font-medium text-gray-900 dark:text-gray-100">{friendship.receiver.name || friendship.receiver.email}</p>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">{friendship.receiver.email}</p>
+                      <p className="font-medium text-gray-900 dark:text-gray-100">
+                        {friendship.receiver.name || friendship.receiver.email}
+                      </p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        {friendship.receiver.email}
+                      </p>
                     </div>
                   </div>
                   <Button
@@ -268,7 +340,10 @@ export default function FriendsPageClient({
             </h2>
             <div className="space-y-3">
               {friends.map((user) => (
-                <div key={user.id} className="flex items-center justify-between bg-gray-50 dark:bg-gray-700/50 p-3 rounded-lg">
+                <div
+                  key={user.id}
+                  className="flex items-center justify-between bg-gray-50 dark:bg-gray-700/50 p-3 rounded-lg"
+                >
                   <div className="flex items-center gap-3">
                     <Image
                       src={user.image || "/file.svg"}
@@ -278,18 +353,33 @@ export default function FriendsPageClient({
                       className="rounded-full object-cover"
                     />
                     <div>
-                      <p className="font-medium text-gray-900 dark:text-gray-100">{user.name || user.email}</p>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">{user.email}</p>
+                      <p className="font-medium text-gray-900 dark:text-gray-100">
+                        {user.name || user.email}
+                      </p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        {user.email}
+                      </p>
                     </div>
                   </div>
-                  <Button
-                    size="sm"
-                    color="danger"
-                    onPress={() => handleRemoveFriend(user.friendshipId!)} // friendshipId должен быть доступен
-                    disabled={isActionPending}
-                  >
-                    Удалить из друзей
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      color="secondary"
+                      onPress={() => handleStartChat(user.id)}
+                      disabled={isActionPending}
+                    >
+                      начать чат
+                    </Button>
+
+                    <Button
+                      size="sm"
+                      color="danger"
+                      onPress={() => handleRemoveFriend(user.friendshipId!)}
+                      disabled={isActionPending}
+                    >
+                      Удалить из друзей
+                    </Button>
+                  </div>
                 </div>
               ))}
             </div>

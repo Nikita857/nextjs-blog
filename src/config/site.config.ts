@@ -4,6 +4,7 @@ export const siteConfig = {
         {href: "/", label: "Главная" },
         {href: "/blog", label: "Блог" },
         {href: "/dashboard", label: "Личный кабинет" },
-        {href: "/friends", label: "Друзья" }
+        {href: "/friends", label: "Друзья" },
+        {href: "/chat", label: "Чат" }
     ]
 }
