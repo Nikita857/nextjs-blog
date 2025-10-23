@@ -1,4 +1,4 @@
-"use server";
+'use server';
 
 import { auth } from "@/auth/auth";
 import prisma from "@/utils/prisma";
@@ -6,14 +6,13 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { ReactionType } from "@/generated/prisma";
 import { createConversation } from "./chat.actions";
+import { io } from "socket.io-client";
 
 export async function sharePost(postId: string, friendIds: string[]) {
   const session = await auth();
-  if (!session?.user?.id) {
+  if (!session?.user?.id || !session.accessToken) {
     return { error: "Unauthorized" };
   }
-
-  const userId = session.user.id;
 
   try {
     const postToShare = await prisma.post.findUnique({
@@ -21,33 +20,42 @@ export async function sharePost(postId: string, friendIds: string[]) {
       select: { id: true, title: true },
     });
 
-    if (!postToShare) return { error: "Post not found" };
-    for (const friendId of friendIds) {
-      const conversation = await createConversation(friendId);
-
-      if (conversation) {
-        await prisma.message.create({
-          data: {
-            sender: { connect: { id: userId } },
-            conversation: { connect: { id: conversation.id } },
-            content: `Взгляни-ка на этот пост: "${postToShare.title}"`,
-            type: "shared_post",
-            sharedPost: {
-              connect: {
-                id: postToShare.id,
-              },
-            },
-          },
-        });
-      }
+    if (!postToShare) {
+      return { error: "Post not found" };
     }
 
+    const socket = io(process.env.NEXT_PUBLIC_WEBSOCKET_URL || "http://localhost:3001", {
+      auth: {
+        token: session.accessToken,
+      },
+    });
+
+    socket.on('connect', async () => {
+      for (const friendId of friendIds) {
+        const conversation = await createConversation(friendId);
+
+        if (conversation) {
+          socket.emit("sendMessage", {
+            conversationId: conversation.id,
+            content: `Пользователь поделился с вами постом: "${postToShare.title}"`,
+            sharedPostId: postToShare.id,
+            sharedPostTitle: postToShare.title,
+          });
+        }
+      }
+      setTimeout(() => {
+        socket.disconnect();
+      }, 1000);
+    });
+
     return { success: true };
+
   } catch (error) {
     console.error("Failed to share post", error);
     return { error: "Failed to share post" };
   }
 }
+
 
 /**
  * Создает новый пост в базе данных.

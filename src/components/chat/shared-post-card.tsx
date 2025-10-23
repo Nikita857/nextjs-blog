@@ -2,7 +2,6 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Post, User, Category, Reaction } from '@/generated/prisma';
 
-// Определяем тип для поста со всеми связями, которые мы запрашиваем
 type PostWithRelations = Post & {
   author: User;
   categories: Category[];

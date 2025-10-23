@@ -6,6 +6,7 @@ import { deletePost, updatePost } from "@/actions/post.actions";
 import { ReactionType } from "@/generated/prisma";
 import Link from "next/link";
 import Image from "next/image";
+import { id } from "zod/locales";
 
 type Props = {
   params: {
@@ -13,12 +14,12 @@ type Props = {
   };
 };
 
-export default async function PostPage({ params }: Props) {
+export default async function PostPage({ params: { id } }: { params: { id: string } }) {
   const session = await auth();
 
   // 1. При загрузке поста, сразу включаем в запрос связанные с ним рубрики
   const post = await prisma.post.findUnique({
-    where: { id: params.id },
+    where: { id: id },
     include: {
       author: { select: { email: true, image: true, name: true } },
       categories: true, // <-- Включаем рубрики поста

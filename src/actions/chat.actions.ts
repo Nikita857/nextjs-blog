@@ -133,7 +133,7 @@ export async function createConversation(otherUserId: string) {
     });
   }
 
-  revalidatePath("/chat"); // Перезагружаем путь чата, чтобы обновить список диалогов
+  //revalidatePath("/chat"); // Перезагружаем путь чата, чтобы обновить список диалогов
   return conversation;
 }
 
