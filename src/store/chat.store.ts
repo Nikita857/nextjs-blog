@@ -1,58 +1,45 @@
-// src/store/chat.store.ts
 import { create } from 'zustand';
+import { Conversation, Message, Post, User, Category, Reaction } from '@/generated/prisma';
 
-interface Message {
-  id: string;
-  conversationId: string;
-  senderId: string;
-  content: string;
-  createdAt: Date;
-}
+// Создаем более полные типы, которые отражают наши запросы в БД
+export type FullMessage = Message & {
+  sender: User;
+  sharedPost: (Post & {
+    author: User;
+    categories: Category[];
+    reactions: Reaction[];
+  }) | null;
+};
 
-interface Conversation {
-  id: string;
-  user1Id: string;
-  user1: { id: string; name: string | null; email: string; image: string | null };
-  user2Id: string;
-  user2: { id: string; name: string | null; email: string; image: string | null };
-  messages: Message[];
-  createdAt: Date;
-  updatedAt: Date;
-}
+export type FullConversation = Conversation & {
+  user1: User;
+  user2: User;
+  messages: FullMessage[];
+};
 
 interface ChatState {
-  conversations: (Conversation & {
-    user1: { id: string; name: string | null; email: string; image: string | null };
-    user2: { id: string; name: string | null; email: string; image: string | null };
-    messages: Message[];
-  })[];
+  conversations: FullConversation[];
   activeConversationId: string | null;
-  messages: Message[];
-  setConversations: (conversations: (Conversation & {
-    user1: { id: string; name: string | null; email: string; image: string | null };
-    user2: { id: string; name: string | null; email: string; image: string | null };
-    messages: Message[];
-  })[]) => void;
-  // ДОБАВИТЬ функциональное обновление
-  updateConversations: (updater: (prev: Conversation[]) => Conversation[]) => void;
+  messages: FullMessage[];
+  setConversations: (conversations: FullConversation[]) => void;
+  updateConversations: (updater: (prev: FullConversation[]) => FullConversation[]) => void;
   setActiveConversationId: (id: string | null) => void;
-  setMessages: (messages: Message[]) => void;
-  addMessage: (message: Message) => void;
+  setMessages: (messages: FullMessage[] | ((prev: FullMessage[]) => FullMessage[])) => void;
+  addMessage: (message: FullMessage) => void;
 }
 
-// В store обновите setMessages:
 export const useChatStore = create<ChatState>((set) => ({
   conversations: [],
   activeConversationId: null,
   messages: [],
   setConversations: (conversations) => set({ conversations }),
-  updateConversations: (updater) => 
+  updateConversations: (updater) =>
     set((state) => ({ conversations: updater(state.conversations) })),
   setActiveConversationId: (id) => set({ activeConversationId: id }),
-  // ОБНОВЛЕННЫЙ setMessages для поддержки функционального обновления
-  setMessages: (messages) => set((state) => ({
-    messages: typeof messages === 'function' ? messages(state.messages) : messages
-  })),
+  setMessages: (messages) =>
+    set((state) => ({
+      messages: typeof messages === 'function' ? messages(state.messages) : messages,
+    })),
   addMessage: (message) =>
     set((state) => ({
       messages: [...state.messages, message],

@@ -2,10 +2,9 @@
 
 import { useEffect, useTransition } from "react";
 import { useChatSocket } from "@/hooks/useChatSocket";
-import { useChatStore } from "@/store/chat.store";
-import { getMessagesForConversation, deleteMessage, editMessage } from "@/actions/chat.actions";
+import { FullConversation, FullMessage, useChatStore } from "@/store/chat.store";
+import { getMessagesForConversation, deleteMessage } from "@/actions/chat.actions";
 import { useSession } from "next-auth/react";
-import { Conversation, Message } from "@/generated/prisma/client";
 import { useSearchParams } from "next/navigation";
 
 import { ConversationList } from "@/components/chat/conversation-list";
@@ -15,11 +14,7 @@ import { MessageInput } from "@/components/chat/message-input";
 import { ChatPlaceholder } from "@/components/chat/chat-placeholder";
 
 interface ChatClientPageProps {
-  initialConversations: (Conversation & {
-    user1: { id: string; name: string | null; email: string; image: string | null };
-    user2: { id:string; name: string | null; email: string; image: string | null };
-    messages: Message[];
-  })[];
+  initialConversations: FullConversation[];
 }
 
 export default function ChatClientPage({
@@ -61,11 +56,11 @@ export default function ChatClientPage({
   useEffect(() => {
     if (!socket) return;
 
-    const handleReceiveMessage = (newMessage: Message) => {
+    const handleReceiveMessage = (newMessage: FullMessage) => {
       if (newMessage.conversationId === activeConversationId) {
-        setMessages((prevMessages: any[]) => {
+        setMessages((prevMessages) => {
           const filteredMessages = prevMessages.filter(
-            (msg: any) => !(msg.id.toString().startsWith('temp-') && msg.conversationId === newMessage.conversationId)
+            (msg) => !(msg.id.toString().startsWith('temp-') && msg.conversationId === newMessage.conversationId)
           );
           return [...filteredMessages, newMessage];
         });
@@ -81,7 +76,6 @@ export default function ChatClientPage({
       });
     };
 
-    // НОВОЕ: Обработчик события удаления сообщения от другого пользователя
     const handleMessageDeleted = (data: { deletedMessageId: string; conversationId: string }) => {
       if (data.conversationId === activeConversationId) {
         setMessages((prevMessages) =>
@@ -103,12 +97,12 @@ export default function ChatClientPage({
     };
 
     socket.on("receiveMessage", handleReceiveMessage);
-    socket.on("messageDeleted", handleMessageDeleted); // НОВОЕ: Подписываемся на событие
+    socket.on("messageDeleted", handleMessageDeleted);
     socket.on("messageEdited", handleMessageEdited);
 
     return () => {
       socket.off("receiveMessage", handleReceiveMessage);
-      socket.off("messageDeleted", handleMessageDeleted); // НОВОЕ: Отписываемся при размонтировании
+      socket.off("messageDeleted", handleMessageDeleted);
       socket.off("messageEdited", handleMessageEdited);
     };
   }, [socket, activeConversationId, updateConversations, setMessages]);
@@ -120,10 +114,8 @@ export default function ChatClientPage({
     }
     startTransition(async () => {
       try {
-        const fetchedMessages = await getMessagesForConversation(activeConversationId);
-        const sortedMessages = Array.isArray(fetchedMessages) 
-          ? fetchedMessages.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
-          : [];
+        const fetchedMessages = await getMessagesForConversation(activeConversationId) as FullMessage[];
+        const sortedMessages = fetchedMessages.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
         setMessages(sortedMessages);
       } catch (error) {
         console.error("Failed to fetch messages:", error);
@@ -133,13 +125,18 @@ export default function ChatClientPage({
   }, [activeConversationId, currentUserId, setMessages]);
 
   const handleSendMessage = (content: string) => {
-    if (!socket || !activeConversationId || !currentUserId) return;
-    const tempMessage: Message = {
+    if (!socket || !activeConversationId || !currentUserId || !session?.user) return;
+    const tempMessage: FullMessage = {
       id: `temp-${Date.now()}`,
       content: content,
       senderId: currentUserId,
       conversationId: activeConversationId,
-      createdAt: new Date()
+      createdAt: new Date(),
+      isEdited: false,
+      type: "text",
+      sharedPostId: null,
+      sharedPost: null,
+      sender: session.user as any, 
     };
     addMessage(tempMessage);
     socket.emit("sendMessage", {
@@ -148,7 +145,6 @@ export default function ChatClientPage({
     });
   };
 
-  // Oбработчик удаления
   const handleDeleteMessage = async (messageId: string) => {
     if (!socket || !activeConversationId) return;
 
@@ -161,13 +157,10 @@ export default function ChatClientPage({
       conversationId: activeConversationId,
     });
 
-    const result = await deleteMessage(messageId);
-    if (result.error) {
-      console.error(result.error);
-    }
+    await deleteMessage(messageId);
   };
 
-  const handleEditMessage = async (messageId: string, newContent: string) => {
+  const handleEditMessage = (messageId: string, newContent: string) => {
     if (!socket || !activeConversationId) return;
 
     setMessages(prev => prev.map(msg => msg.id === messageId ? {...msg, content: newContent, isEdited: true}: msg));
@@ -178,8 +171,6 @@ export default function ChatClientPage({
       conversationId: activeConversationId,
     });
   }
-
-
 
   if (!currentUserId) {
     return (
@@ -224,4 +215,3 @@ export default function ChatClientPage({
     </div>
   );
 }
-

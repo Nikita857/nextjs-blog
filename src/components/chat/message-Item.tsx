@@ -1,19 +1,20 @@
 "use client";
 
-import { Message } from "@/generated/prisma";
-import { useEffect, useRef, useState } from "react";
-import ChatTools from "./chat-tools";
+import { FullMessage } from "@/store/chat.store";
 import { Button, Input } from "@heroui/react";
+import { memo, useEffect, useRef, useState } from "react";
 import { SharedPostCard } from "./shared-post-card";
+import ChatTools from "./chat-tools";
 
 type MessageItemProps = {
-  message: Message & { isEdited?: boolean, sharedPost?: any }; // Сделал поле опциональным на всякий случай
+  message: FullMessage;
   isOwnMessage: boolean;
   onDelete: (messageId: string) => void;
   onEdit: (messageId: string, newContent: string) => void;
 };
 
-export const MessageItem = ({
+// eslint-disable-next-line react/display-name
+export const MessageItem = memo(({
   message,
   isOwnMessage,
   onDelete,
@@ -184,4 +185,4 @@ export const MessageItem = ({
       )}
     </div>
   );
-};
+});

@@ -1,28 +1,16 @@
 import Image from "next/image";
-import { Conversation, Message } from "@/generated/prisma";
+import { FullConversation } from "@/store/chat.store";
+import { memo } from "react";
 
 interface ConversationListItemProps {
-  conversation: Conversation & {
-    user1: {
-      id: string;
-      name: string | null;
-      email: string;
-      image: string | null;
-    };
-    user2: {
-      id: string;
-      name: string | null;
-      email: string;
-      image: string | null;
-    };
-    messages: Message[];
-  };
+  conversation: FullConversation;
   isActive: boolean;
   onClick: (conversationId: string) => void;
   currentUserId: string;
 }
 
-const ConversationListItem: React.FC<ConversationListItemProps> = ({
+// eslint-disable-next-line react/display-name
+const ConversationListItem: React.FC<ConversationListItemProps> = memo(({
   conversation,
   isActive,
   onClick,
@@ -62,5 +50,5 @@ const ConversationListItem: React.FC<ConversationListItemProps> = ({
       </div>
     </div>
   );
-};
+});
 export default ConversationListItem;

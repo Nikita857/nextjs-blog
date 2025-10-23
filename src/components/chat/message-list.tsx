@@ -11,7 +11,7 @@ export const MessageList = ({
   messages,
   currentUserId,
   onDeleteMessage,
-  onEditMessage,
+  onEditMessage
 }: MessageListProps) => {
   return (
     <div className="flex-grow p-4 overflow-y-auto space-y-4">

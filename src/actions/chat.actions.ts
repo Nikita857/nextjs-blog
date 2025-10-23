@@ -1,15 +1,16 @@
-"use server";
+'use server';
 
 import { auth } from "@/auth/auth";
 import prisma from "@/utils/prisma";
 import { error } from "console";
 import { revalidatePath } from "next/cache";
 import { success } from "zod";
+import { FullConversation } from "@/store/chat.store";
 
 /**
  * Получает все диалоги для текущего пользователя.
  */
-export async function getConversations() {
+export async function getConversations(): Promise<FullConversation[]> {
   const session = await auth();
   if (!session?.user?.id) {
     throw new Error("Unauthorized");
@@ -22,21 +23,32 @@ export async function getConversations() {
       OR: [{ user1Id: userId }, { user2Id: userId }],
     },
     include: {
-      user1: {
-        select: { id: true, name: true, email: true, image: true },
-      },
-      user2: {
-        select: { id: true, name: true, email: true, image: true },
-      },
+      user1: true, // Включаем полные данные о пользователях
+      user2: true,
       messages: {
-        orderBy: { createdAt: "asc" },
-        take: 1, // Только последнее сообщение для превью
+        include: {
+          sender: true,
+          sharedPost: {
+            include: {
+              author: true,
+              categories: true,
+              reactions: true,
+            },
+          },
+        },
+        orderBy: {
+          createdAt: "desc", // Сортируем, чтобы взять самое последнее
+        },
+        take: 1, // Берем только одно для превью
       },
     },
-    orderBy: { updatedAt: "desc" },
+    orderBy: {
+      updatedAt: "desc",
+    },
   });
 
-  return conversations;
+  // Приводим результат к нашему типу FullConversation[]
+  return conversations as unknown as FullConversation[];
 }
 
 /**

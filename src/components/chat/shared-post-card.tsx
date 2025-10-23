@@ -41,7 +41,7 @@ export const SharedPostCard = ({ post }: SharedPostCardProps) => {
 
         {/* Контент (обрезанный) */}
         <div
-          className="prose prose-sm dark:prose-invert max-h-24 overflow-hidden text-ellipsis"
+          className="prose prose-sm text-black dark:prose-invert max-h-24 overflow-hidden text-ellipsis"
           dangerouslySetInnerHTML={{ __html: post.content || '' }}
         />
 

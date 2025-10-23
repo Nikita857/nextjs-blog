@@ -1,6 +1,7 @@
 "use client";
 
 import Image from 'next/image';
+import { memo } from 'react';
 
 // Тип для пользователя, отображаемого в шапке
 type OtherUser = {
@@ -14,7 +15,8 @@ interface ChatHeaderProps {
   otherUser: OtherUser;
 }
 
-export const ChatHeader: React.FC<ChatHeaderProps> = ({ otherUser }) => {
+// eslint-disable-next-line react/display-name
+const ChatHeaderComponent: React.FC<ChatHeaderProps> = ({ otherUser }) => {
   return (
     <div className="bg-white dark:bg-gray-800 p-4 border-b border-gray-200 dark:border-gray-700 flex items-center">
       {otherUser && (
@@ -32,3 +34,5 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({ otherUser }) => {
     </div>
   );
 };
+
+export const ChatHeader = memo(ChatHeaderComponent);

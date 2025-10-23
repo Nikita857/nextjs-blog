@@ -1,5 +1,5 @@
 import { Button, Input } from "@heroui/react";
-import React, { useState } from "react";
+import React, { memo, useState } from "react";
 import EmojiPicker, { EmojiClickData } from "emoji-picker-react";
 
 type MessageInputProps = {
@@ -26,10 +26,11 @@ const EmojiIcon = (props: any) => (
   </svg>
 );
 
-export const MessageInput = ({
+// eslint-disable-next-line react/display-name
+const MessageInputComponent: React.FC<MessageInputProps> = ({
   onSendMessage,
   isSending,
-}: MessageInputProps) => {
+}) => {
   const [messageInput, setMessageInput] = useState("");
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 
@@ -81,3 +82,5 @@ export const MessageInput = ({
     </form>
   );
 };
+
+export const MessageInput = memo(MessageInputComponent);
