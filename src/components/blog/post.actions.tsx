@@ -16,6 +16,7 @@ type Props = {
   initialLikes: number;
   initialDislikes: number;
   currentUserReaction: ReactionType | null;
+  isAuthor: boolean;
 };
 
 export default function PostActions({
@@ -26,6 +27,7 @@ export default function PostActions({
   initialLikes,
   initialDislikes,
   currentUserReaction,
+  isAuthor,
 }: Props) {
   const [isModalOpen, setModalOpen] = useState(false);
 
@@ -51,34 +53,38 @@ export default function PostActions({
         />
       </div>
 
-      <div className="flex items-center gap-4">
-        <Button
-          variant="flat"
-          color="secondary"
-          onPress={() => setModalOpen(true)}
-        >
-          Редактировать
-        </Button>
-        <form action={deletePostAction}>
-          <Button type="submit" variant="flat" color="danger">
-            Удалить
-          </Button>
-        </form>
-      </div>
-      <CustomModal
-          isOpen={isModalOpen}
-          onClose={() => setModalOpen(false)}
-          title="Редактирование поста"
-          size="xl"
-        >
-          {/* 2. Вызываем PostForm и передаем ей нужные пропсы */}
-          <PostForm
-            post={post}
-            formAction={handleUpdate}
-            allCategories={allCategories} // <-- Передаем дальше
-            buttonText="Сохранить изменения"
-          />{" "}
-        </CustomModal>
+      {isAuthor ? (
+        <>
+          <div className="flex items-center gap-4">
+            <Button
+              variant="flat"
+              color="secondary"
+              onPress={() => setModalOpen(true)}
+            >
+              Редактировать
+            </Button>
+            <form action={deletePostAction}>
+              <Button type="submit" variant="flat" color="danger">
+                Удалить
+              </Button>
+            </form>
+          </div>
+          <CustomModal
+            isOpen={isModalOpen}
+            onClose={() => setModalOpen(false)}
+            title="Редактирование поста"
+            size="xl"
+          >
+            {/* 2. Вызываем PostForm и передаем ей нужные пропсы */}
+            <PostForm
+              post={post}
+              formAction={handleUpdate}
+              allCategories={allCategories} // <-- Передаем дальше
+              buttonText="Сохранить изменения"
+            />{" "}
+          </CustomModal>
+        </>
+      ) : null}
     </footer>
   );
 }

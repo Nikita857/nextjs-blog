@@ -37,14 +37,22 @@ export const MessageItem = ({
   };
 
   const handleDelete = () => {
-    onDelete(message.id);
-    setContextMenu(null);
+    if(isOwnMessage) {
+      onDelete(message.id);
+      setContextMenu(null);
+    }else{
+      setContextMenu(null);
+    }
   };
 
   const handleStartEdit = () => {
-    setIsEditing(true);
-    setEditText(message.content);
-    setContextMenu(null);
+    if(isOwnMessage) {
+      setIsEditing(true);
+      setEditText(message.content);
+      setContextMenu(null);
+    }else{
+      setContextMenu(null);
+    }
   };
 
   const handleCancelEdit = () => {
@@ -112,7 +120,6 @@ export const MessageItem = ({
   return (
     // Это главный контейнер, он должен быть один
     <div className={`flex ${isOwnMessage ? "justify-end" : "justify-start"}`}>
-      {/* Это "пузырь" сообщения */}
       <div
         onContextMenu={handleContextMenu}
         className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg shadow relative cursor-pointer ${
@@ -121,7 +128,7 @@ export const MessageItem = ({
             : "bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100"
         } ${message.id.toString().startsWith("temp-") ? "opacity-70" : ""}`}
       >
-        {isEditing ? (
+        {isEditing && isOwnMessage ? (
           // РЕЖИМ РЕДАКТИРОВАНИЯ
           <div className="w-full space-y-2">
             <Input
@@ -167,6 +174,7 @@ export const MessageItem = ({
             deleteMessage={handleDelete}
             onCopy={handleCopy}
             onEdit={handleStartEdit}
+            isOwnMessage={isOwnMessage}
           />
         </div>
       )}

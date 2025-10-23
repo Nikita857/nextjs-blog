@@ -1,10 +1,11 @@
-import {Listbox, ListboxItem, cn} from "@heroui/react";
+import { Listbox, ListboxItem, cn } from "@heroui/react";
 
 type ChatToolsProps = {
-    deleteMessage: () => void;
-    onCopy: () => void;
-    onEdit: () => void;
-}
+  deleteMessage: () => void;
+  onCopy: () => void;
+  onEdit: () => void;
+  isOwnMessage: boolean;
+};
 
 export const AddNoteIcon = (props) => {
   return (
@@ -116,13 +117,18 @@ export const DeleteDocumentIcon = (props) => {
   );
 };
 
-export const ListboxWrapper = ({children}) => (
-  <div className="w-full max-w-[260px] border-small px-1 py-2 rounded-small border-default-200 dark:border-default-100">
+export const ListboxWrapper = ({ children }) => (
+  <div className="w-full max-w-[260px] border-small px-1 py-2 rounded-small border-default-200 dark:border-default-100 bg-amber-50">
     {children}
   </div>
 );
 
-export default function ChatTools({deleteMessage, onCopy, onEdit}: ChatToolsProps) {
+const ChatTools = ({
+  deleteMessage,
+  onCopy,
+  onEdit,
+  isOwnMessage,
+}: ChatToolsProps) => {
   const iconClasses = "text-xl text-default-500 pointer-events-none shrink-0";
 
   return (
@@ -135,24 +141,34 @@ export default function ChatTools({deleteMessage, onCopy, onEdit}: ChatToolsProp
         >
           Копировать
         </ListboxItem>
-        <ListboxItem
-          key="edit"
-          showDivider
-          onPress={onEdit}
-          startContent={<EditDocumentIcon className={iconClasses} />}
-        >
-          Редактировать 
-        </ListboxItem>
-        <ListboxItem
-          key="delete"
-          className="text-danger"
-          color="danger"
-          onPress={deleteMessage}
-          startContent={<DeleteDocumentIcon className={cn(iconClasses, "text-danger")} />}
-        >
-          Удалить
-        </ListboxItem>
+
+        {isOwnMessage ? (
+          <>
+            <ListboxItem
+              key="edit"
+              showDivider
+              onPress={onEdit}
+              startContent={<EditDocumentIcon className={iconClasses} />}
+            >
+              Редактировать
+            </ListboxItem>
+            <ListboxItem
+              key="delete"
+              className="text-danger"
+              color="danger"
+              onPress={deleteMessage}
+              startContent={
+                <DeleteDocumentIcon className={cn(iconClasses, "text-danger")} />
+              }
+            >
+              Удалить
+            </ListboxItem>
+          </>
+        ) : null}
+        
       </Listbox>
     </ListboxWrapper>
   );
-}
+};
+
+export default ChatTools;

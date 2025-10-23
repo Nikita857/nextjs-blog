@@ -8,7 +8,7 @@ export const useChatSocket = () => {
 
   useEffect(() => {
     if (session?.accessToken) {
-      const newSocket = io("http://localhost:3001", {
+      const newSocket = io(process.env.NEXT_PUBLIC_WEBSOCKET_URL || "http://localhost:3001", {
         auth: {
           token: session.accessToken,
         },

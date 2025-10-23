@@ -23,8 +23,8 @@ export default async function PostPage({ params }: Props) {
       author: { select: { email: true, image: true, name: true } },
       categories: true, // <-- Включаем рубрики поста
       reactions: {
-        include: {user: true}
-      }
+        include: { user: true },
+      },
     },
   });
 
@@ -40,13 +40,13 @@ export default async function PostPage({ params }: Props) {
   }
 
   const isAuthor = session?.user?.id === post.authorId;
+  console.log("is author: ",isAuthor);
 
   // 3. Создаем "привязанные" версии экшенов
   // .bind(null, post.id) создает новую функцию, у которой первый аргумент уже "зафиксирован"
   // и равен id текущего поста.
   const updatePostWithId = updatePost.bind(null, post.id);
   const deletePostWithId = deletePost.bind(null, post.id);
-
 
   const initialLikes = post.reactions.filter(
     (r) => r.type === ReactionType.LIKE
@@ -112,17 +112,16 @@ export default async function PostPage({ params }: Props) {
           className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700 flex 
        justify-between items-center"
         >
-          {isAuthor && (
-            <PostActions
-              post={post}
-              allCategories={allCategories}
-              updatePostAction={updatePostWithId}
-              deletePostAction={deletePostWithId}
-              initialDislikes={initialDislikes}
-              initialLikes={initialLikes}
-              currentUserReaction={currentUserReaction}
-            />
-          )}
+          <PostActions
+            post={post}
+            allCategories={allCategories}
+            updatePostAction={updatePostWithId}
+            deletePostAction={deletePostWithId}
+            initialDislikes={initialDislikes}
+            initialLikes={initialLikes}
+            currentUserReaction={currentUserReaction}
+            isAuthor={isAuthor}
+          />
         </div>
       </div>
     </article>
