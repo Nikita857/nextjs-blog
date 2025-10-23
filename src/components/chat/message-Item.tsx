@@ -3,6 +3,7 @@
 import { Message } from "@/generated/prisma";
 import { useEffect, useRef, useState } from "react";
 import ChatTools from "./chat-tools";
+import { error } from "console";
 
 type MessageItemProps = {
   message: Message;
@@ -22,7 +23,7 @@ export const MessageItem = ({ message, isOwnMessage, onDelete }: MessageItemProp
   const handleContextMenu = (event: React.MouseEvent) => {
     event.preventDefault();
     if (isOwnMessage) {
-      setContextMenu({ visible: true, x: event.clientX, y: event.clientY });
+      setContextMenu({ visible: true, x: event.clientX, y: event.clientY + 50 });
     }
   };
 
@@ -42,6 +43,41 @@ export const MessageItem = ({ message, isOwnMessage, onDelete }: MessageItemProp
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
+
+  useEffect(()=>{
+    if(contextMenu?.visible && menuRef.current) {
+      const menu = menuRef.current;
+      const {innerWidth, innerHeight} = window;
+      const {offsetWidth, offsetHeight} = menu;
+
+      let newX = contextMenu.x;
+      let newY = contextMenu.y;
+
+      const margin = 10;
+
+      if(newX + offsetWidth > innerWidth) {
+        newX = innerWidth - offsetWidth - margin;
+      }
+
+      if(newY + offsetHeight > innerHeight) {
+        newY = innerHeight - offsetWidth - margin;
+      }
+
+      if(newX !== contextMenu.x || newY !== contextMenu.y) {
+        setContextMenu({visible: true, x: newX, y: newY});
+      }
+    }
+  },[contextMenu]);
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(message.content).then(() => {
+      console.log("Текст скопирован в буфер обмена");
+      setContextMenu(null);
+    }).catch(error => {
+      console.error(error);
+      setContextMenu(null);
+    })
+  }
 
   return (
     <div
@@ -69,7 +105,7 @@ export const MessageItem = ({ message, isOwnMessage, onDelete }: MessageItemProp
           className="absolute z-10 bg-white dark:bg-gray-800 border border-gray-200 
       dark:border-gray-700 rounded-md shadow-lg"
         >
-          <ChatTools deleteMessage={handleDelete}></ChatTools>
+          <ChatTools deleteMessage={handleDelete} onCopy={handleCopy}></ChatTools>
         </div>
       )}
     </div>

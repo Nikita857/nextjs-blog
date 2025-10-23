@@ -2,6 +2,7 @@ import {Listbox, ListboxItem, cn} from "@heroui/react";
 
 type ChatToolsProps = {
     deleteMessage: () => void;
+    onCopy: () => void;
 }
 
 export const AddNoteIcon = (props) => {
@@ -120,7 +121,7 @@ export const ListboxWrapper = ({children}) => (
   </div>
 );
 
-export default function ChatTools({deleteMessage}: ChatToolsProps) {
+export default function ChatTools({deleteMessage, onCopy}: ChatToolsProps) {
   const iconClasses = "text-xl text-default-500 pointer-events-none shrink-0";
 
   return (
@@ -128,15 +129,14 @@ export default function ChatTools({deleteMessage}: ChatToolsProps) {
       <Listbox aria-label="Listbox menu with descriptions" variant="flat">
         <ListboxItem
           key="copy"
-          description="Copy the file link"
           startContent={<CopyDocumentIcon className={iconClasses} />}
+          onPress={onCopy}
         >
           Копировать
         </ListboxItem>
         <ListboxItem
           key="edit"
           showDivider
-          description="Allows you to edit the file"
           startContent={<EditDocumentIcon className={iconClasses} />}
         >
           Редактировать 
@@ -145,7 +145,6 @@ export default function ChatTools({deleteMessage}: ChatToolsProps) {
           key="delete"
           className="text-danger"
           color="danger"
-          description="Permanently delete the file"
           onPress={deleteMessage}
           startContent={<DeleteDocumentIcon className={cn(iconClasses, "text-danger")} />}
         >
