@@ -1,13 +1,12 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useTransition } from "react";
 import { useChatSocket } from "@/hooks/useChatSocket";
 import { useChatStore } from "@/store/chat.store";
-import { getMessagesForConversation } from "@/actions/chat.actions";
+import { getMessagesForConversation, deleteMessage } from "@/actions/chat.actions";
 import { useSession } from "next-auth/react";
 import { Conversation, Message } from "@/generated/prisma/client";
 import { useSearchParams } from "next/navigation";
-
 
 import { ConversationList } from "@/components/chat/conversation-list";
 import { ChatHeader } from "@/components/chat/chat-header";
@@ -15,11 +14,10 @@ import { MessageList } from "@/components/chat/message-list";
 import { MessageInput } from "@/components/chat/message-input";
 import { ChatPlaceholder } from "@/components/chat/chat-placeholder";
 
-
 interface ChatClientPageProps {
   initialConversations: (Conversation & {
     user1: { id: string; name: string | null; email: string; image: string | null };
-    user2: { id: string; name: string | null; email: string; image: string | null };
+    user2: { id:string; name: string | null; email: string; image: string | null };
     messages: Message[];
   })[];
 }
@@ -27,7 +25,6 @@ interface ChatClientPageProps {
 export default function ChatClientPage({
   initialConversations,
 }: ChatClientPageProps) {
-
   const { data: session } = useSession();
   const currentUserId = session?.user?.id;
 
@@ -47,7 +44,6 @@ export default function ChatClientPage({
   const searchParams = useSearchParams();
   const urlConversationId = searchParams.get("conversationId");
 
-  // Инициализация диалогов
   useEffect(() => {
     if (initialConversations && Array.isArray(initialConversations)) {
       setConversations(initialConversations);
@@ -62,7 +58,6 @@ export default function ChatClientPage({
     }
   }, [initialConversations, urlConversationId, activeConversationId, setConversations, setActiveConversationId]);
 
-  // Обработка входящих сообщений
   useEffect(() => {
     if (!socket) return;
 
@@ -75,7 +70,6 @@ export default function ChatClientPage({
           return [...filteredMessages, newMessage];
         });
       }
-
       updateConversations((prevConversations) => {
         if (!Array.isArray(prevConversations)) return [];
         const updatedConversations = prevConversations.map((conv) => 
@@ -87,19 +81,29 @@ export default function ChatClientPage({
       });
     };
 
+    // НОВОЕ: Обработчик события удаления сообщения от другого пользователя
+    const handleMessageDeleted = (data: { deletedMessageId: string; conversationId: string }) => {
+      if (data.conversationId === activeConversationId) {
+        setMessages((prevMessages) =>
+          prevMessages.filter((msg) => msg.id !== data.deletedMessageId)
+        );
+      }
+    };
+
     socket.on("receiveMessage", handleReceiveMessage);
+    socket.on("messageDeleted", handleMessageDeleted); // НОВОЕ: Подписываемся на событие
+
     return () => {
       socket.off("receiveMessage", handleReceiveMessage);
+      socket.off("messageDeleted", handleMessageDeleted); // НОВОЕ: Отписываемся при размонтировании
     };
   }, [socket, activeConversationId, updateConversations, setMessages]);
 
-  // Загрузка сообщений для активного диалога
   useEffect(() => {
     if (!activeConversationId || !currentUserId) {
       setMessages([]);
       return;
     }
-
     startTransition(async () => {
       try {
         const fetchedMessages = await getMessagesForConversation(activeConversationId);
@@ -114,10 +118,8 @@ export default function ChatClientPage({
     });
   }, [activeConversationId, currentUserId, setMessages]);
 
-  // Обработчик отправки сообщения
   const handleSendMessage = (content: string) => {
     if (!socket || !activeConversationId || !currentUserId) return;
-
     const tempMessage: Message = {
       id: `temp-${Date.now()}`,
       content: content,
@@ -125,7 +127,6 @@ export default function ChatClientPage({
       conversationId: activeConversationId,
       createdAt: new Date()
     };
-
     addMessage(tempMessage);
     socket.emit("sendMessage", {
       conversationId: activeConversationId,
@@ -133,7 +134,26 @@ export default function ChatClientPage({
     });
   };
 
-  // --- ПОЛУЧЕНИЕ ДАННЫХ ДЛЯ ОТОБРАЖЕНИЯ ---
+  // НОВОЕ: Обновленный обработчик удаления
+  const handleDeleteMessage = async (messageId: string) => {
+    if (!socket || !activeConversationId) return;
+
+    setMessages((prevMessages) =>
+      prevMessages.filter((msg) => msg.id !== messageId)
+    );
+
+    // НОВОЕ: Отправляем событие на сервер
+    socket.emit("deleteMessage", {
+      messageId: messageId,
+      conversationId: activeConversationId,
+    });
+
+    const result = await deleteMessage(messageId);
+    if (result.error) {
+      console.error(result.error);
+    }
+  };
+
   if (!currentUserId) {
     return (
       <div className="flex items-center justify-center h-full text-gray-500">
@@ -158,12 +178,15 @@ export default function ChatClientPage({
         currentUserId={currentUserId}
         onConversationClick={setActiveConversationId}
       />
-
       <div className="flex flex-col flex-grow">
         {activeConversation ? (
           <>
             <ChatHeader otherUser={otherUserInActiveConversation} />
-            <MessageList messages={messages} currentUserId={currentUserId} />
+            <MessageList
+              messages={messages}
+              currentUserId={currentUserId}
+              onDeleteMessage={handleDeleteMessage}
+            />
             <MessageInput onSendMessage={handleSendMessage} isSending={isPending} />
           </>
         ) : (
@@ -173,3 +196,4 @@ export default function ChatClientPage({
     </div>
   );
 }
+

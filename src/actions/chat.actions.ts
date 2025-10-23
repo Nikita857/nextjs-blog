@@ -2,7 +2,9 @@
 
 import { auth } from "@/auth/auth";
 import prisma from "@/utils/prisma";
+import { error } from "console";
 import { revalidatePath } from "next/cache";
+import { success } from "zod";
 
 /**
  * Получает все диалоги для текущего пользователя.
@@ -112,4 +114,35 @@ export async function createConversation(otherUserId: string) {
 
   revalidatePath("/chat"); // Перезагружаем путь чата, чтобы обновить список диалогов
   return conversation;
+}
+
+// Удаляет сообщение по его ID
+
+export async function deleteMessage(messageId: string) {
+  const session = await auth();
+  if (!session?.user.id) {
+    return { error: "Unauthorized" };
+  }
+
+  try {
+    const message = await prisma.message.findUnique({
+      where: {
+        id: messageId,
+      },
+    });
+
+    if (message?.senderId !== session.user.id) {
+      return { error: "You are not authorized to delete this message" };
+    }
+
+    await prisma.message.delete({
+      where: { id: messageId },
+    });
+
+    revalidatePath("/");
+    return { success: true, deleteMessage: messageId };
+  } catch (error) {
+    console.error("Failed to delete message", error);
+    return { error: "Failed to delete message" };
+  }
 }
