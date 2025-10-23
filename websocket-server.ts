@@ -158,12 +158,59 @@ io.on("connection", async (socket) => {
     }
   );
 
+  socket.on(
+    "editMessage",
+    async (data: {
+      messageId: string;
+      newContent: string;
+      conversationId: string;
+    }) => {
+      try {
+        const { messageId, newContent, conversationId } = data;
+        const userId = (socket as any).userId;
+
+        const message = await prisma.message.findUnique({
+          where: { id: messageId },
+          select: { senderId: true },
+        });
+
+        if (!message || message.senderId !== userId) {
+          socket.emit('error', 'Unauthorized to edit this message');
+          return;
+        }
+
+        const updatedMessage = await prisma.message.update({
+          where: { id: messageId },
+          data: {
+            content: newContent,
+            isEdited: true,
+          },
+        });
+
+        io.to(conversationId).emit("messageEdited", {
+          messageId,
+          newContent: updatedMessage.content,
+          isEdited: updatedMessage.isEdited,
+          conversationId,
+        });
+
+        console.log(
+          `Sent 'messageEdited' event for message ${messageId} in conversation ${conversationId}`
+        );
+      } catch (error) {
+        console.error("Error handling editMessage event:", error);
+      }
+    }
+  );
+
   socket.on("disconnect", () => {
     // 3. Удаляем пользователя из карты при отключении
     const disconnectedUserId = (socket as any).userId;
     if (disconnectedUserId && userSocketMap[disconnectedUserId]) {
       delete userSocketMap[disconnectedUserId];
-      console.log(`User ${disconnectedUserId} disconnected and removed from map.`);
+      console.log(
+        `User ${disconnectedUserId} disconnected and removed from map.`
+      );
       console.log("Current user sockets:", userSocketMap);
     }
   });

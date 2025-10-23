@@ -5,11 +5,13 @@ type MessageListProps = {
   messages: Message[];
   currentUserId: string;
   onDeleteMessage: (messageId: string) => void;
+  onEditMessage: (messageId: string, newContent: string) => void;
 };
 export const MessageList = ({
   messages,
   currentUserId,
   onDeleteMessage,
+  onEditMessage,
 }: MessageListProps) => {
   return (
     <div className="flex-grow p-4 overflow-y-auto space-y-4">
@@ -20,6 +22,7 @@ export const MessageList = ({
             message={msg}
             isOwnMessage={msg.senderId === currentUserId}
             onDelete={onDeleteMessage}
+            onEdit={onEditMessage}
           />
         ))
       ) : (

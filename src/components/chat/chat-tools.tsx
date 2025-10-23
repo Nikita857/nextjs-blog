@@ -3,6 +3,7 @@ import {Listbox, ListboxItem, cn} from "@heroui/react";
 type ChatToolsProps = {
     deleteMessage: () => void;
     onCopy: () => void;
+    onEdit: () => void;
 }
 
 export const AddNoteIcon = (props) => {
@@ -121,7 +122,7 @@ export const ListboxWrapper = ({children}) => (
   </div>
 );
 
-export default function ChatTools({deleteMessage, onCopy}: ChatToolsProps) {
+export default function ChatTools({deleteMessage, onCopy, onEdit}: ChatToolsProps) {
   const iconClasses = "text-xl text-default-500 pointer-events-none shrink-0";
 
   return (
@@ -137,6 +138,7 @@ export default function ChatTools({deleteMessage, onCopy}: ChatToolsProps) {
         <ListboxItem
           key="edit"
           showDivider
+          onPress={onEdit}
           startContent={<EditDocumentIcon className={iconClasses} />}
         >
           Редактировать 

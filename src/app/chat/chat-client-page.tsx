@@ -3,7 +3,7 @@
 import { useEffect, useTransition } from "react";
 import { useChatSocket } from "@/hooks/useChatSocket";
 import { useChatStore } from "@/store/chat.store";
-import { getMessagesForConversation, deleteMessage } from "@/actions/chat.actions";
+import { getMessagesForConversation, deleteMessage, editMessage } from "@/actions/chat.actions";
 import { useSession } from "next-auth/react";
 import { Conversation, Message } from "@/generated/prisma/client";
 import { useSearchParams } from "next/navigation";
@@ -90,12 +90,26 @@ export default function ChatClientPage({
       }
     };
 
+    const handleMessageEdited = (data: { messageId: string; newContent: string; isEdited: boolean; conversationId: string }) => {
+      if (data.conversationId === activeConversationId) {
+        setMessages((prevMessages) =>
+          prevMessages.map((msg) =>
+            msg.id === data.messageId
+              ? { ...msg, content: data.newContent, isEdited: data.isEdited }
+              : msg
+          )
+        );
+      }
+    };
+
     socket.on("receiveMessage", handleReceiveMessage);
     socket.on("messageDeleted", handleMessageDeleted); // НОВОЕ: Подписываемся на событие
+    socket.on("messageEdited", handleMessageEdited);
 
     return () => {
       socket.off("receiveMessage", handleReceiveMessage);
       socket.off("messageDeleted", handleMessageDeleted); // НОВОЕ: Отписываемся при размонтировании
+      socket.off("messageEdited", handleMessageEdited);
     };
   }, [socket, activeConversationId, updateConversations, setMessages]);
 
@@ -134,7 +148,7 @@ export default function ChatClientPage({
     });
   };
 
-  // НОВОЕ: Обновленный обработчик удаления
+  // Oбработчик удаления
   const handleDeleteMessage = async (messageId: string) => {
     if (!socket || !activeConversationId) return;
 
@@ -142,7 +156,6 @@ export default function ChatClientPage({
       prevMessages.filter((msg) => msg.id !== messageId)
     );
 
-    // НОВОЕ: Отправляем событие на сервер
     socket.emit("deleteMessage", {
       messageId: messageId,
       conversationId: activeConversationId,
@@ -153,6 +166,20 @@ export default function ChatClientPage({
       console.error(result.error);
     }
   };
+
+  const handleEditMessage = async (messageId: string, newContent: string) => {
+    if (!socket || !activeConversationId) return;
+
+    setMessages(prev => prev.map(msg => msg.id === messageId ? {...msg, content: newContent, isEdited: true}: msg));
+
+    socket.emit("editMessage", {
+      messageId,
+      newContent,
+      conversationId: activeConversationId,
+    });
+  }
+
+
 
   if (!currentUserId) {
     return (
@@ -186,6 +213,7 @@ export default function ChatClientPage({
               messages={messages}
               currentUserId={currentUserId}
               onDeleteMessage={handleDeleteMessage}
+              onEditMessage={handleEditMessage}
             />
             <MessageInput onSendMessage={handleSendMessage} isSending={isPending} />
           </>

@@ -157,5 +157,6 @@ model Message {
   sender User @relation("SentMessages", fields: [senderId], references: [id])
   content String @db.Text
   createdAt DateTime @default(now())
+  isEdited Boolean @default(false)
   @@map("messages")
 }

@@ -146,3 +146,40 @@ export async function deleteMessage(messageId: string) {
     return { error: "Failed to delete message" };
   }
 }
+
+export async function editMessage(messageId: string, newContent: string) {
+  const session = await auth();
+
+  if (!session?.user.id) {
+    return;
+  }
+
+  if (!newContent || newContent.trim() === "") {
+    return { error: "Message content cannot be empty." };
+  }
+
+  try {
+    const message = await prisma.message.findUnique({
+      where: { id: messageId },
+    });
+
+    if (!message || message.senderId !== session.user.id) {
+      return { error: "Unauthorized or message not found" };
+    }
+
+    const updatedMessage = await prisma.message.update({
+      where: { id: messageId },
+      data: {
+        content: newContent,
+        isEdited: true,
+      },
+    });
+
+    revalidatePath("/chat");
+
+    return { success: true, updatedMessage };
+  } catch (error) {
+    console.error("Failed to edit message with ID", messageId, error);
+    return { error: "Failed to edit message" };
+  }
+}
