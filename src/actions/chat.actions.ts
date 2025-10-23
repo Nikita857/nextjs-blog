@@ -69,6 +69,15 @@ export async function getMessagesForConversation(conversationId: string) {
       sender: {
         select: { id: true, name: true, email: true, image: true },
       },
+      sharedPost: {
+        include: {
+          author: {
+            select: { name: true, image: true, email: true },
+          },
+          reactions: true,
+          categories: true,
+        },
+      },
     },
     orderBy: { createdAt: "asc" },
   });

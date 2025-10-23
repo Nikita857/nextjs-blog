@@ -3,9 +3,51 @@
 import { auth } from "@/auth/auth";
 import prisma from "@/utils/prisma";
 import { revalidatePath } from "next/cache";
-import { redirect, unauthorized } from "next/navigation";
+import { redirect } from "next/navigation";
 import { ReactionType } from "@/generated/prisma";
-import { error } from "console";
+import { createConversation } from "./chat.actions";
+
+export async function sharePost(postId: string, friendIds: string[]) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return { error: "Unauthorized" };
+  }
+
+  const userId = session.user.id;
+
+  try {
+    const postToShare = await prisma.post.findUnique({
+      where: { id: postId },
+      select: { id: true, title: true },
+    });
+
+    if (!postToShare) return { error: "Post not found" };
+    for (const friendId of friendIds) {
+      const conversation = await createConversation(friendId);
+
+      if (conversation) {
+        await prisma.message.create({
+          data: {
+            sender: { connect: { id: userId } },
+            conversation: { connect: { id: conversation.id } },
+            content: `Взгляни-ка на этот пост: "${postToShare.title}"`,
+            type: "shared_post",
+            sharedPost: {
+              connect: {
+                id: postToShare.id,
+              },
+            },
+          },
+        });
+      }
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to share post", error);
+    return { error: "Failed to share post" };
+  }
+}
 
 /**
  * Создает новый пост в базе данных.
@@ -125,68 +167,76 @@ export async function getPublishedPosts(options: {
   }
 }
 
-export async function toggleReaction(postId: string, reactionType: ReactionType) {
-    const session = await auth();
-    if(!session?.user?.id) {
-        return {error: "Unauthorized"};
+export async function toggleReaction(
+  postId: string,
+  reactionType: ReactionType
+) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return { error: "Unauthorized" };
+  }
+
+  const userId = session?.user?.id;
+
+  try {
+    const existingReaction = await prisma.reaction.findUnique({
+      where: {
+        userId_postId: {
+          userId: userId,
+          postId: postId,
+        },
+      },
+    });
+
+    if (existingReaction) {
+      if (existingReaction.type === reactionType) {
+        await prisma.reaction.delete({
+          where: { id: existingReaction.id },
+        });
+      } else {
+        await prisma.reaction.update({
+          where: { id: existingReaction.id },
+          data: { type: reactionType },
+        });
+      }
+    } else {
+      await prisma.reaction.create({
+        data: {
+          userId: userId,
+          postId: postId,
+          type: reactionType,
+        },
+      });
     }
 
-    const userId = session?.user?.id;
+    const likes = await prisma.reaction.count({
+      where: {
+        postId: postId,
+        type: ReactionType.LIKE,
+      },
+    });
 
-    try {
-        const existingReaction = await prisma.reaction.findUnique({
-            where: {
-                userId_postId: {
-                    userId: userId,
-                    postId: postId,
-                },
-            },
-        });
+    const dislikes = await prisma.reaction.count({
+      where: {
+        postId: postId,
+        type: ReactionType.DISLIKE,
+      },
+    });
 
-        if(existingReaction) {
-            if(existingReaction.type === reactionType) {
-                await prisma.reaction.delete({
-                    where:{id: existingReaction.id},
-                });
-            } else {
-                await prisma.reaction.update({
-                    where: {id: existingReaction.id},
-                    data: {type: reactionType}
-                });
-            }
-        }else {
-            await prisma.reaction.create({
-                data: {
-                    userId: userId,
-                    postId: postId,
-                    type: reactionType,
-                },
-            });
-        }
+    // Сброс кэша страницы
 
-        const likes = await prisma.reaction.count({
-            where: {
-                postId: postId,
-                type: ReactionType.LIKE,
-            },
-        });
+    revalidatePath(`/blog/${postId}`);
+    revalidatePath("/blog");
+    revalidatePath("/");
 
-        const dislikes = await prisma.reaction.count({
-            where: {
-                postId: postId,
-                type: ReactionType.DISLIKE,
-            },
-        });
-
-        // Сброс кэша страницы
-
-        revalidatePath(`/blog/${postId}`);
-        revalidatePath("/blog");
-        revalidatePath("/");
-
-        return {likes, dislikes, userReaction: existingReaction?.type === reactionType ? null: reactionType}
-    } catch (error) {
-        console.error("Failed to toggle reaction", error);
-        return {error: "Failed to process reaction"};
-    }
+    return {
+      likes,
+      dislikes,
+      userReaction:
+        existingReaction?.type === reactionType ? null : reactionType,
+    };
+  } catch (error) {
+    console.error("Failed to toggle reaction", error);
+    return { error: "Failed to process reaction" };
+  }
 }

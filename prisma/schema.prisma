@@ -9,22 +9,22 @@ datasource db {
 }
 
 model User {
-  id                    String       @id @default(uuid())
-  name                  String?
-  email                 String       @unique
-  password              String
-  image                 String?
-  accounts              Account[]
-  sessions              Session[]
-  createdAt             DateTime     @default(now()) @map("created_at")
-  updatedAt             DateTime     @updatedAt @map("updated_at")
-  posts                 Post[]
-  reactions             Reaction[]   // Исправлено: reaction -> reactions (множественное число)
-  sentFriendRequests    Friendship[] @relation("SentFriendRequests") // Исправлено имя отношения
-  receivedFriendRequests Friendship[] @relation("ReceivedFriendRequests") // Исправлено имя отношения
-  user1Conversations Conversation[] @relation("User1Conversations")
-  user2Conversations Conversation[] @relation("User2Conversations")
-  sentMessages Message[] @relation("SentMessages")
+  id                     String         @id @default(uuid())
+  name                   String?
+  email                  String         @unique
+  password               String
+  image                  String?
+  accounts               Account[]
+  sessions               Session[]
+  createdAt              DateTime       @default(now()) @map("created_at")
+  updatedAt              DateTime       @updatedAt @map("updated_at")
+  posts                  Post[]
+  reactions              Reaction[] // Исправлено: reaction -> reactions (множественное число)
+  sentFriendRequests     Friendship[]   @relation("SentFriendRequests") // Исправлено имя отношения
+  receivedFriendRequests Friendship[]   @relation("ReceivedFriendRequests") // Исправлено имя отношения
+  user1Conversations     Conversation[] @relation("User1Conversations")
+  user2Conversations     Conversation[] @relation("User2Conversations")
+  sentMessages           Message[]      @relation("SentMessages")
 
   @@map("users")
 }
@@ -34,12 +34,12 @@ model Account {
   type              String
   provider          String
   providerAccountId String
-  refresh_token     String?   @db.Text
-  access_token      String?   @db.Text
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
   expires_at        Int?
   token_type        String?
   scope             String?
-  id_token          String?   @db.Text
+  id_token          String? @db.Text
   session_state     String?
 
   createdAt DateTime @default(now()) @map("created_at")
@@ -73,16 +73,17 @@ model VerificationToken {
 }
 
 model Post {
-  id         String     @id @default(uuid())
-  title      String
-  content    String?    @db.Text  // Добавлен @db.Text для длинного текста
-  published  Boolean    @default(false)
-  createdAt  DateTime   @default(now()) @map("created_at")
-  updatedAt  DateTime   @updatedAt @map("updated_at")
-  authorId   String
-  author     User       @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  categories Category[] // Добавлен onDelete: Cascade
-  reactions  Reaction[] // Исправлено: reaction -> reactions
+  id               String     @id @default(uuid())
+  title            String
+  content          String?    @db.Text // Добавлен @db.Text для длинного текста
+  published        Boolean    @default(false)
+  createdAt        DateTime   @default(now()) @map("created_at")
+  updatedAt        DateTime   @updatedAt @map("updated_at")
+  authorId         String
+  author           User       @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  categories       Category[] // Добавлен onDelete: Cascade
+  reactions        Reaction[] // Исправлено: reaction -> reactions
+  sharedInMessages Message[]  @relation("SharedPosts")
 
   @@map("posts")
 }
@@ -121,42 +122,45 @@ enum FriendshipStatus {
 }
 
 model Friendship {
-  id           String           @id @default(uuid())
-  senderId     String
-  sender       User             @relation("SentFriendRequests", fields: [senderId], references: [id], onDelete: Cascade)
-  receiverId   String
-  receiver     User             @relation("ReceivedFriendRequests", fields: [receiverId], references: [id], onDelete: Cascade)
-  status       FriendshipStatus @default(PENDING)
-  createdAt    DateTime         @default(now()) @map("created_at")  // Добавлен @default(now())
-  updatedAt    DateTime         @updatedAt @map("updated_at")
+  id         String           @id @default(uuid())
+  senderId   String
+  sender     User             @relation("SentFriendRequests", fields: [senderId], references: [id], onDelete: Cascade)
+  receiverId String
+  receiver   User             @relation("ReceivedFriendRequests", fields: [receiverId], references: [id], onDelete: Cascade)
+  status     FriendshipStatus @default(PENDING)
+  createdAt  DateTime         @default(now()) @map("created_at") // Добавлен @default(now())
+  updatedAt  DateTime         @updatedAt @map("updated_at")
 
   @@unique([senderId, receiverId])
   @@map("friendships")
 }
 
 model Conversation {
-  id String @id @default(uuid())
-  user1Id String
-  user1 User @relation("User1Conversations", fields: [user1Id], references: [id])
-  user2Id String
-  user2 User @relation("User2Conversations", fields: [user2Id], references: [id])
-  messages Message[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id        String    @id @default(uuid())
+  user1Id   String
+  user1     User      @relation("User1Conversations", fields: [user1Id], references: [id])
+  user2Id   String
+  user2     User      @relation("User2Conversations", fields: [user2Id], references: [id])
+  messages  Message[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 
   @@unique([user1Id, user2Id])
-
   @@map("converasations")
 }
 
 model Message {
-  id String @id @default(uuid())
+  id             String       @id @default(uuid())
   conversationId String
-  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-  senderId String
-  sender User @relation("SentMessages", fields: [senderId], references: [id])
-  content String @db.Text
-  createdAt DateTime @default(now())
-  isEdited Boolean @default(false)
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  senderId       String
+  sender         User         @relation("SentMessages", fields: [senderId], references: [id])
+  content        String       @db.Text
+  createdAt      DateTime     @default(now())
+  isEdited       Boolean      @default(false)
+  sharedPostId   String?
+  type           String?      @default("text")
+  sharedPost     Post?        @relation("SharedPosts", fields: [sharedPostId], references: [id], onDelete: SetNull)
+
   @@map("messages")
 }

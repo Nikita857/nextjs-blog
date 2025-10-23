@@ -256,3 +256,37 @@ export async function removeFriend(friendshipId: string) {
     return { error: "Не удалось удалить дружбу" };
   }
 }
+
+export async function getFriends() {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return { error: "Unauthorized" };
+  }
+
+  const userId = session.user.id;
+
+  try {
+    const friendships = await prisma.friendship.findMany({
+      where: {
+        status: FriendshipStatus.ACCEPTED,
+        OR: [
+          { senderId: userId },
+          { receiverId: userId },
+        ],
+      },
+      include: {
+        sender: { select: { id: true, name: true, email: true, image: true } },
+        receiver: { select: { id: true, name: true, email: true, image: true } },
+      },
+    });
+
+    const friends = friendships.map(friendship => 
+      friendship.senderId === userId ? friendship.receiver : friendship.sender
+    );
+
+    return { friends };
+  } catch (error) {
+    console.error("Failed to get friends", error);
+    return { error: "Failed to get friends" };
+  }
+}

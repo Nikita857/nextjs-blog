@@ -4,9 +4,10 @@ import { Message } from "@/generated/prisma";
 import { useEffect, useRef, useState } from "react";
 import ChatTools from "./chat-tools";
 import { Button, Input } from "@heroui/react";
+import { SharedPostCard } from "./shared-post-card";
 
 type MessageItemProps = {
-  message: Message & { isEdited?: boolean }; // Сделал поле опциональным на всякий случай
+  message: Message & { isEdited?: boolean, sharedPost?: any }; // Сделал поле опциональным на всякий случай
   isOwnMessage: boolean;
   onDelete: (messageId: string) => void;
   onEdit: (messageId: string, newContent: string) => void;
@@ -153,6 +154,9 @@ export const MessageItem = ({
           // РЕЖИМ ОТОБРАЖЕНИЯ
           <>
             <p>{message.content}</p>
+            {message.type === 'shared_post' && message.sharedPost && (
+              <SharedPostCard post={message.sharedPost} />
+            )}
             <span className="text-xs opacity-75 mt-1 block">
               {message.isEdited && <span className="italic mr-1">(изм.)</span>}
               {new Date(message.createdAt).toLocaleTimeString()}
