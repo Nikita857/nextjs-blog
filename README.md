@@ -138,4 +138,4 @@ The project follows a feature-driven directory structure within the `src` folder
 
 ## Screenshots
 
-![pidzhachok](public\5454129332709621511.jpg "Пиджачок)").
+![pidzhachok](/public/5454129332709621511.jpgg "Пиджачок)").
