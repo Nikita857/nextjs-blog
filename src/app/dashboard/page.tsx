@@ -51,7 +51,7 @@ export default async function DashboardPage() {
     }
 
     await prisma.user.update({
-      where: { id: session.user!.id },
+      where: { id: session?.user!.id },
       data: {
         name: name,
         image: imageDataUrl,
