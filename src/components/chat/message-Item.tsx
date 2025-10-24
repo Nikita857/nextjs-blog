@@ -5,6 +5,7 @@ import { Button, Input } from "@heroui/react";
 import { memo, useEffect, useRef, useState } from "react";
 import { SharedPostCard } from "./shared-post-card";
 import ChatTools from "./chat-tools";
+import { useTheme } from "next-themes";
 
 type MessageItemProps = {
   message: FullMessage;
@@ -22,6 +23,13 @@ export const MessageItem = memo(({
 }: MessageItemProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState(message.content);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  },[]);
+  
+  const { theme } = useTheme();
 
   const [contextMenu, setContextMenu] = useState<{
     visible: boolean;
@@ -121,13 +129,13 @@ export const MessageItem = memo(({
 
   return (
     // Это главный контейнер, он должен быть один
-    <div className={`flex ${isOwnMessage ? "justify-end" : "justify-start"}`}>
+    <div className={`flex ${isOwnMessage ? "justify-end" : "justify-start"} w-4/5 mx-25`}>
       <div
         onContextMenu={handleContextMenu}
         className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg shadow relative cursor-pointer ${
           isOwnMessage
             ? "bg-blue-500 text-white"
-            : "bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+            : `${theme === 'light' ? "bg-gray-200 text-gray-900": "bg-gray-700 text-gray-100"}`
         } ${message.id.toString().startsWith("temp-") ? "opacity-70" : ""}`}
       >
         {isEditing && isOwnMessage ? (
@@ -180,6 +188,7 @@ export const MessageItem = memo(({
             onCopy={handleCopy}
             onEdit={handleStartEdit}
             isOwnMessage={isOwnMessage}
+            theme={theme}
           />
         </div>
       )}

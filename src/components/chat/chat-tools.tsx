@@ -1,13 +1,28 @@
 import { Listbox, ListboxItem, cn } from "@heroui/react";
+import { ReactNode } from "react";
 
-type ChatToolsProps = {
+// Исправляем интерфейс для ListboxWrapper
+interface ListboxWrapperProps {
+  children: ReactNode;
+  theme: string | undefined;
+}
+
+// Исправляем тип для ChatToolsProps
+interface ChatToolsProps {
   deleteMessage: () => void;
   onCopy: () => void;
   onEdit: () => void;
   isOwnMessage: boolean;
-};
+  theme: string | undefined;
+}
 
-export const AddNoteIcon = (props) => {
+// Добавляем типы для иконок
+interface IconProps {
+  className?: string;
+  [key: string]: any;
+}
+
+export const AddNoteIcon = (props: IconProps) => {
   return (
     <svg
       aria-hidden="true"
@@ -32,7 +47,7 @@ export const AddNoteIcon = (props) => {
   );
 };
 
-export const CopyDocumentIcon = (props) => {
+export const CopyDocumentIcon = (props: IconProps) => {
   return (
     <svg
       aria-hidden="true"
@@ -61,7 +76,7 @@ export const CopyDocumentIcon = (props) => {
   );
 };
 
-export const EditDocumentIcon = (props) => {
+export const EditDocumentIcon = (props: IconProps) => {
   return (
     <svg
       aria-hidden="true"
@@ -86,7 +101,7 @@ export const EditDocumentIcon = (props) => {
   );
 };
 
-export const DeleteDocumentIcon = (props) => {
+export const DeleteDocumentIcon = (props: IconProps) => {
   return (
     <svg
       aria-hidden="true"
@@ -117,22 +132,31 @@ export const DeleteDocumentIcon = (props) => {
   );
 };
 
-export const ListboxWrapper = ({ children }) => (
-  <div className="w-full max-w-[260px] border-small px-1 py-2 rounded-small border-default-200 dark:border-default-100 bg-amber-50">
-    {children}
-  </div>
-);
+export const ListboxWrapper = ({ children, theme }: ListboxWrapperProps) => {
+  return (
+    <div className={`
+      w-full max-w-[260px] border-small px-1 py-2 rounded-small border-default-200
+      ${theme === 'light' 
+        ? 'bg-amber-50 text-gray-900' 
+        : 'bg-gray-700 text-gray-100'
+      }
+    `}>
+      {children}
+    </div>
+  );
+};
 
 const ChatTools = ({
   deleteMessage,
   onCopy,
   onEdit,
   isOwnMessage,
+  theme // добавляем theme в пропсы
 }: ChatToolsProps) => {
   const iconClasses = "text-xl text-default-500 pointer-events-none shrink-0";
 
   return (
-    <ListboxWrapper>
+    <ListboxWrapper theme={theme}> {/* передаем theme в ListboxWrapper */}
       <Listbox aria-label="Listbox menu with descriptions" variant="flat">
         <ListboxItem
           key="copy"

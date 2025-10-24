@@ -1,17 +1,25 @@
-"use client";
+'use client';
 
-import { useSession } from "next-auth/react";
+import { useCallback, useEffect, useRef, useTransition } from "react";
 import { useChatSocket } from "@/hooks/useChatSocket";
-import { useChatStore, FullConversation } from "@/store/chat.store";
+import {
+  FullConversation,
+  FullMessage,
+  useChatStore,
+} from "@/store/chat.store";
+import {
+  getMessagesForConversation,
+  deleteMessage,
+} from "@/actions/chat.actions";
+import { useSession } from "next-auth/react";
 import { useConversations } from "@/hooks/useConversations";
-import { useChatEvents } from "@/hooks/useChatEvents";
-import { useMessages } from "@/hooks/useMessages";
-
 import { ConversationList } from "@/components/chat/conversation-list";
 import { ChatHeader } from "@/components/chat/chat-header";
 import { MessageList } from "@/components/chat/message-list";
 import { MessageInput } from "@/components/chat/message-input";
 import { ChatPlaceholder } from "@/components/chat/chat-placeholder";
+import { useChatEvents } from "@/hooks/useChatEvents";
+import { useMessages } from "@/hooks/useMessages";
 
 interface ChatClientPageProps {
   initialConversations: FullConversation[];
@@ -20,18 +28,19 @@ interface ChatClientPageProps {
 export default function ChatClientPage({
   initialConversations,
 }: ChatClientPageProps) {
+
   const { data: session } = useSession();
   const currentUserId = session?.user?.id;
   const socket = useChatSocket();
 
-  // Управляем диалогами
-  const { conversations, activeConversationId, setActiveConversationId } =
-    useConversations(initialConversations);
-
-  // Слушаем события сокета
+  const { 
+    conversations, 
+    activeConversationId, 
+    setActiveConversationId 
+  } = useConversations(initialConversations);
+  
   useChatEvents(socket, activeConversationId);
 
-  // Управляем сообщениями
   const {
     messages,
     isPending,
@@ -41,10 +50,8 @@ export default function ChatClientPage({
     handleTyping,
   } = useMessages(socket, activeConversationId);
 
-  // Получаем оставшиеся состояния из стора
   const { typingUsers, onlineUsers } = useChatStore();
 
-  // Логика для определения собеседника
   const activeConversation = conversations.find(
     (conv) => conv.id === activeConversationId
   );
@@ -53,10 +60,8 @@ export default function ChatClientPage({
       ? activeConversation.user2
       : activeConversation.user1
     : null;
-
-  const typingUsersInConversation = typingUsers.filter(
-    (id) => id !== currentUserId
-  );
+  
+  const typingUsersInConversation = typingUsers.filter(id => id !== currentUserId);
 
   if (!currentUserId) {
     return (
@@ -66,22 +71,41 @@ export default function ChatClientPage({
     );
   }
 
+  console.log("Current activeConversationId:", activeConversationId);
+  console.log("ConversationList visibility condition:", activeConversationId ? 'hidden md:block' : 'block');
+  console.log("Chat window visibility condition:", activeConversationId ? 'flex' : 'hidden md:flex');
+
   return (
     <div className="flex flex-grow w-full h-full bg-gray-50 dark:bg-gray-900">
-      <ConversationList
-        conversations={conversations}
-        activeConversationId={activeConversationId}
-        currentUserId={currentUserId}
-        onConversationClick={setActiveConversationId}
-        onlineUsers={onlineUsers}
-      />
-      <div className="flex flex-col flex-grow">
+      <div className={`
+        w-full md:w-1/3 lg:w-1/3 
+        border-r border-gray-200 dark:border-gray-700 p-4 overflow-y-auto
+        ${activeConversationId ? 'hidden md:block' : 'block'}
+      `}>
+        <ConversationList
+          conversations={conversations}
+          activeConversationId={activeConversationId}
+          currentUserId={currentUserId}
+          onConversationClick={setActiveConversationId}
+          onlineUsers={onlineUsers}
+        />
+      </div>
+
+      <div className={`
+        flex-col flex-grow 
+        ${activeConversationId ? 'flex' : 'hidden md:flex'}
+        md:w-2/3 lg:w-2/3 
+      `}>
         {activeConversation ? (
           <>
             <ChatHeader
               otherUser={otherUserInActiveConversation}
               typingUsers={typingUsersInConversation}
               onlineUsers={onlineUsers}
+              onBack={() => {
+                console.log("Back button clicked!");
+                setActiveConversationId(null);
+              }} 
             />
             <MessageList
               messages={messages}

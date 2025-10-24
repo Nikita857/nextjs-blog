@@ -50,6 +50,7 @@ export default function SharePostModal({ isOpen, onClose, postId }: Props) {
           {friends.map((friend) => (
             <ListboxItem
               key={friend.id}
+              className="bg-gray-100 dark:bg-neutral-700"
               textValue={friend.name || friend.email!}
               startContent={<Avatar src={friend.image || '/file.svg'} />}
             >

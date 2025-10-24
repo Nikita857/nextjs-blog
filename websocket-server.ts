@@ -16,15 +16,10 @@ const userSocketMap: { [key: string]: string } = {};
 console.log("WebSocket server started on port 3001");
 
 io.on("connection", async (socket) => {
-  console.log("A user connected:", socket.id);
 
   const token = socket.handshake.auth.token;
 
   if (!token) {
-    console.log(
-      "Authentication token not provided. Disconnecting socket:",
-      socket.id
-    );
     socket.disconnect(true);
     return;
   }
@@ -32,10 +27,6 @@ io.on("connection", async (socket) => {
   const userId = await verifyTokenAndGetUserId(token);
 
   if (!userId) {
-    console.log(
-      "Invalid authentication token. Disconnecting socket:",
-      socket.id
-    );
     socket.disconnect(true);
     return;
   }
@@ -45,8 +36,6 @@ io.on("connection", async (socket) => {
 
   // 2. Добавляем пользователя в карту при подключении
   userSocketMap[userId] = socket.id;
-  console.log(`User ${userId} connected with socket ${socket.id}`);
-  console.log("Current user sockets:", userSocketMap);
 
   const onlineUserIds = Object.keys(userSocketMap);
   socket.emit('online_users_list', onlineUserIds);
@@ -62,9 +51,6 @@ io.on("connection", async (socket) => {
 
   userConversations.forEach((conversation: { id: string | string[] }) => {
     socket.join(conversation.id);
-    console.log(
-      `Socket ${socket.id} (User ${userId}) joined conversation room: ${conversation.id}`
-    );
   });
 
   socket.on("joinConversation", async (conversationId: string) => {
@@ -77,9 +63,6 @@ io.on("connection", async (socket) => {
       (conversation.user1Id === userId || conversation.user2Id === userId)
     ) {
       socket.join(conversationId);
-      console.log(
-        `Socket ${socket.id} (User ${userId}) explicitly joined conversation room: ${conversationId}`
-      );
     } else {
       console.warn(
         `User ${userId} tried to join unauthorized conversation: ${conversationId}`
@@ -139,7 +122,6 @@ io.on("connection", async (socket) => {
         };
         // 3. Отправляем собранный объект
         io.to(conversationId).emit("receiveMessage", messageForClient);
-        console.log(`Message sent to conversation ${conversationId}`);
       } catch (error) {
         console.error("Error handling sendMessage event:", error);
         socket.emit("error", "Failed to send message");
@@ -171,10 +153,6 @@ io.on("connection", async (socket) => {
           deletedMessageId: messageId,
           conversationId: conversationId,
         });
-
-        console.log(
-          `Sent 'messageDeleted' event for message ${messageId} in conversation ${conversationId}`
-        );
       } catch (error) {
         console.error("Error handling deleteMessage event:", error);
       }
@@ -216,10 +194,6 @@ io.on("connection", async (socket) => {
           isEdited: updatedMessage.isEdited,
           conversationId,
         });
-
-        console.log(
-          `Sent 'messageEdited' event for message ${messageId} in conversation ${conversationId}`
-        );
       } catch (error) {
         console.error("Error handling editMessage event:", error);
       }
@@ -239,10 +213,6 @@ io.on("connection", async (socket) => {
     const disconnectedUserId = (socket as any).userId;
     if (disconnectedUserId && userSocketMap[disconnectedUserId]) {
       delete userSocketMap[disconnectedUserId];
-      console.log(
-        `User ${disconnectedUserId} disconnected and removed from map.`
-      );
-      console.log("Current user sockets:", userSocketMap);
       io.emit('user_offline', disconnectedUserId);
     }
   });

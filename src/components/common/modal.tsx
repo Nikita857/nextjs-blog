@@ -16,9 +16,9 @@ const CustomModal = ({isOpen, onClose, size, title, children}: IProps) => {
         <Modal isOpen={isOpen} onClose={onClose} size={size}>
         <ModalContent>
               <ModalHeader className="flex flex-col gap-1 border-b">
-                <h3 className="text-xl text-black font-semibold">{title}</h3>
+                <h3 className="text-xl text-black dark:text-white font-semibold">{title}</h3>
               </ModalHeader>
-              <ModalBody className="space-y-4 py-6">
+              <ModalBody className="space-y-4 py-6 text-black dark:text-white">
                 {children}
               </ModalBody>
         </ModalContent>

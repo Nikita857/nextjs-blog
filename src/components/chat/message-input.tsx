@@ -55,7 +55,7 @@ const MessageInputComponent: React.FC<MessageInputProps> = ({
   return (
     <form
       onSubmit={handleSubmit}
-      className="bg-white dark:bg-gray-800 p-4 border-t border-gray-200 dark:border-gray-700 flex items-center gap-2 relative"
+      className="bg-white dark:bg-gray-800 w-8/10 mx-29 p-4 border-t rounded-2xl border-gray-200 dark:border-gray-700 flex items-center gap-2 relative"
     >
       {showEmojiPicker && (
         <div className="absolute bottom-20">
@@ -79,13 +79,6 @@ const MessageInputComponent: React.FC<MessageInputProps> = ({
         className="flex-grow"
         disabled={isSending}
       />
-      <Button
-        type="submit"
-        color="primary"
-        disabled={isSending || !messageInput.trim()}
-      >
-        {isSending ? "Отправка..." : "Отправить"}
-      </Button>
     </form>
   );
 };

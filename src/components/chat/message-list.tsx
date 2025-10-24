@@ -1,5 +1,6 @@
 import { Message } from "@/generated/prisma";
 import { MessageItem } from "./message-Item";
+import { useTheme } from "next-themes";
 
 type MessageListProps = {
   messages: Message[];
@@ -13,8 +14,11 @@ export const MessageList = ({
   onDeleteMessage,
   onEditMessage
 }: MessageListProps) => {
+  const {theme, systemTheme, setTheme} = useTheme();
+  const currentTheme = theme === 'system' ? systemTheme : theme;
   return (
-    <div className="flex-grow p-4 overflow-y-auto space-y-4">
+    <div className={`flex-grow p-4 overflow-y-auto space-y-4 items-center 
+    justify-center ${currentTheme === 'light' ? 'bg-gradient-to-r from-indigo-200 to-amber-200' : 'bg-gray-900'}`}>
       {Array.isArray(messages) && messages.length > 0 ? (
         messages.map((msg) => (
           <MessageItem

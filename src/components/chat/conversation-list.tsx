@@ -5,8 +5,18 @@ import ConversationListItem from "./conversation-list-item";
 
 // Определяем тип для пропсов
 type ConversationWithDetails = Conversation & {
-  user1: { id: string; name: string | null; email: string; image: string | null };
-  user2: { id: string; name: string | null; email: string; image: string | null };
+  user1: {
+    id: string;
+    name: string | null;
+    email: string;
+    image: string | null;
+  };
+  user2: {
+    id: string;
+    name: string | null;
+    email: string;
+    image: string | null;
+  };
   messages: Message[];
 };
 
@@ -26,7 +36,13 @@ export const ConversationList: React.FC<ConversationListProps> = ({
   onlineUsers,
 }) => {
   return (
-    <div className="w-1/4 border-r border-gray-200 dark:border-gray-700 p-4 overflow-y-auto">
+    <div
+      className={`
+          w-full md:w-1/3 lg:w-100 
+          border-r border-gray-200 dark:border-gray-700 p-4 overflow-y-auto
+          ${activeConversationId ? "hidden md:block" : "block"}
+        `}
+    >
       <h2 className="text-2xl font-bold mb-4 text-gray-900 dark:text-gray-100">
         Диалоги
       </h2>
@@ -39,7 +55,9 @@ export const ConversationList: React.FC<ConversationListProps> = ({
               isActive={conv.id === activeConversationId}
               onClick={onConversationClick}
               currentUserId={currentUserId}
-              isOnline={onlineUsers.includes(conv.user1.id === currentUserId ? conv.user2.id : conv.user1.id)}
+              isOnline={onlineUsers.includes(
+                conv.user1.id === currentUserId ? conv.user2.id : conv.user1.id
+              )}
             />
           ))
         ) : (

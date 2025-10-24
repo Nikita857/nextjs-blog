@@ -6,13 +6,6 @@ import { deletePost, updatePost } from "@/actions/post.actions";
 import { ReactionType } from "@/generated/prisma";
 import Link from "next/link";
 import Image from "next/image";
-import { id } from "zod/locales";
-
-type Props = {
-  params: {
-    id: string;
-  };
-};
 
 export default async function PostPage({ params: { id } }: { params: { id: string } }) {
   const session = await auth();
@@ -60,9 +53,9 @@ export default async function PostPage({ params: { id } }: { params: { id: strin
     : null;
 
   return (
-    <article className="w-full max-w-4xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
+    <article className="w-full max-w-4xl mx-auto px-4 sm:px-6 py-8 sm:py-12 ">
       <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 sm:p-8 md:p-10">
-        <header className="mb-8 border-b border-gray-200 dark:border-gray-700 pb-6">
+        <header className="mb-8 border-b border-gray-200 dark:border-gray-600 pb-6">
           <h1 className="text-3xl md:text-4xl lg:text-5xl font-extrabold tracking-tight text-gray-900 dark:text-gray-100 mb-4 leading-tight">
             {post.title}
           </h1>
@@ -105,7 +98,7 @@ export default async function PostPage({ params: { id } }: { params: { id: strin
         </header>
 
         <div
-          className="prose prose-lg lg:prose-xl max-w-none dark:prose-invert"
+          className="prose prose-lg lg:prose-xl max-w-none dark:text-white"
           dangerouslySetInnerHTML={{ __html: post.content || "" }}
         ></div>
 

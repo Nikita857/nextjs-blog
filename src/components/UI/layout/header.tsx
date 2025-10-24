@@ -16,11 +16,12 @@ import {
 import { usePathname } from "next/navigation";
 import RegistrationModal from "../modals/registration.modal";
 import LoginModal from "../modals/login.modal";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { signOutFunction } from "@/actions/sign-out";
 import { useAuthStore } from "@/store/auth.store";
 import { ThemeSwitcher } from "@/components/common/theme-switcher";
 import { siteConfig } from "@/config/site.config";
+import { useTheme } from "next-themes";
 
 export const AcmeLogo = () => {
   return (
@@ -42,6 +43,14 @@ export default function Header() {
   const [isRegistrationOpen, setIsRegistrationOpen] = useState(false);
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(()=>{
+    setMounted(true);
+  }, [])
+
+  const { theme, systemTheme, setTheme } = useTheme();
+  const currentTheme = theme === "system" ? systemTheme : theme;
 
   const handleSignOut = async () => {
     try {
@@ -80,9 +89,12 @@ export default function Header() {
           return (
             <NavbarItem key={item.href}>
               <Link
-                color="foreground"
+                className={`
+               ${mounted && currentTheme === "light" ? "text-gray-900" : "text-gray-100"} 
+               ${isActive ? "text-pink-400" : ""} 
+               hover:text-pink-400 transition-colors
+             `}
                 href={item.href}
-                className={isActive ? "text-pink-400" : ""}
               >
                 {item.label}
               </Link>
