@@ -138,4 +138,22 @@ The project follows a feature-driven directory structure within the `src` folder
 
 ## Screenshots
 
-![pidzhachok](/public/5454129332709621511.jpg "Пиджачок)").
+### Main Pages
+
+![Main Page](/public/image-main.png "Main Page")
+
+![Blog Page](/public/image-blog.png "Blog Page")
+
+![Blog Post Page](/public/image-blog-id.png "Blog Post Page")
+
+![New Post Page](/public/image-new-post.png "New Post Page")
+
+![Dashboard Page](/public/image-cabinet.png "Dashboard Page")
+
+![Friends Page](/public/image-friends.png "Friends Page")
+
+### Chat Interface
+
+![Chat Light Theme](/public/image-chat-light.png "Chat Light Theme")
+
+![Chat Dark Theme](/public/image-chat-dark.png "Chat Dark Theme")
