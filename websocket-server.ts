@@ -88,86 +88,55 @@ io.on("connection", async (socket) => {
 
     async ({
       conversationId,
-
       content,
-
       sharedPostId,
-
       sharedPostTitle, // Принимаем заголовок
     }: {
       conversationId: string;
-
       content: string;
-
       sharedPostId?: string;
-
       sharedPostTitle?: string;
     }) => {
       const senderId = (socket as any).userId;
-
       if (!senderId) return socket.emit("error", "Unauthorized");
-
       try {
-        // 1. Создаем сообщение в БД (только с ID)
-
         const newMessage = await prisma.message.create({
           data: {
             conversationId,
-
             senderId,
-
             content,
-
             type: sharedPostId ? "shared_post" : "text",
-
             sharedPostId: sharedPostId,
           },
-
           include: {
             sender: true, // Включаем отправителя, чтобы он был в объекте
           },
         });
-
         // 2. Собираем объект для отправки вручную, БЕЗ доп. запросов
-
         const messageForClient = {
           ...newMessage,
-
-          // Если это пост, добавляем информацию о нем
-
+          // Если это пост, добавляем информацию о неm
           sharedPost: sharedPostId
             ? {
                 id: sharedPostId,
-
                 title: sharedPostTitle,
-
                 // Добавляем "заглушки", чтобы соответствовать типу на клиенте
-
                 content: "Загрузка...",
-
                 createdAt: new Date(),
-
                 author: {
                   name: newMessage.sender.name,
-
                   image: newMessage.sender.image,
-
                   email: newMessage.sender.email,
                 },
-
                 reactions: [],
               }
             : null,
         };
-
         // 3. Отправляем собранный объект
-
         io.to(conversationId).emit("receiveMessage", messageForClient);
-
         console.log(`Message sent to conversation ${conversationId}`);
       } catch (error) {
         console.error("Error handling sendMessage event:", error);
-
         socket.emit("error", "Failed to send message");
       }
     }
@@ -251,6 +220,14 @@ io.on("connection", async (socket) => {
       }
     }
   );
+
+  socket.on("typing", ({ conversationId }) => {
+    socket.broadcast.to(conversationId).emit("user_typing", { conversationId, userId });
+  });
+
+  socket.on("stop_typing", ({ conversationId }) => {
+   socket.broadcast.to(conversationId).emit("user_stop_typing", { conversationId, userId });
+  });
 
   socket.on("disconnect", () => {
     // 3. Удаляем пользователя из карты при отключении

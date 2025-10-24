@@ -1,11 +1,8 @@
+'use client';
+
 import { Button, Input } from "@heroui/react";
 import React, { memo, useState } from "react";
 import EmojiPicker, { EmojiClickData } from "emoji-picker-react";
-
-type MessageInputProps = {
-  onSendMessage: (content: string) => void;
-  isSending: boolean;
-};
 
 const EmojiIcon = (props: any) => (
   <svg
@@ -26,16 +23,23 @@ const EmojiIcon = (props: any) => (
   </svg>
 );
 
-// eslint-disable-next-line react/display-name
+type MessageInputProps = {
+  onSendMessage: (content: string) => void;
+  isSending: boolean;
+  onTyping: () => void;
+};
+
 const MessageInputComponent: React.FC<MessageInputProps> = ({
   onSendMessage,
   isSending,
+  onTyping,
 }) => {
   const [messageInput, setMessageInput] = useState("");
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 
   const handleEmojiClick = (emojiData: EmojiClickData) => {
     setMessageInput((prev) => prev + emojiData.emoji);
+    onTyping();
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -55,7 +59,7 @@ const MessageInputComponent: React.FC<MessageInputProps> = ({
     >
       {showEmojiPicker && (
         <div className="absolute bottom-20">
-          <EmojiPicker onEmojiClick={handleEmojiClick}/>
+          <EmojiPicker onEmojiClick={handleEmojiClick} />
         </div>
       )}
       <Button
@@ -67,7 +71,10 @@ const MessageInputComponent: React.FC<MessageInputProps> = ({
       </Button>
       <Input
         value={messageInput}
-        onChange={(e) => setMessageInput(e.target.value)}
+        onChange={(e) => {
+          setMessageInput(e.target.value);
+          onTyping();
+        }}
         placeholder="Напишите сообщение..."
         className="flex-grow"
         disabled={isSending}
