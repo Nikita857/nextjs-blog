@@ -48,6 +48,11 @@ io.on("connection", async (socket) => {
   console.log(`User ${userId} connected with socket ${socket.id}`);
   console.log("Current user sockets:", userSocketMap);
 
+  const onlineUserIds = Object.keys(userSocketMap);
+  socket.emit('online_users_list', onlineUserIds);
+
+  socket.broadcast.emit('user_online', userId);
+
   const userConversations = await prisma.conversation.findMany({
     where: {
       OR: [{ user1Id: userId }, { user2Id: userId }],
@@ -238,6 +243,7 @@ io.on("connection", async (socket) => {
         `User ${disconnectedUserId} disconnected and removed from map.`
       );
       console.log("Current user sockets:", userSocketMap);
+      io.emit('user_offline', disconnectedUserId);
     }
   });
 });

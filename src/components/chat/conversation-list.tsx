@@ -15,6 +15,7 @@ interface ConversationListProps {
   activeConversationId: string | null;
   currentUserId: string;
   onConversationClick: (conversationId: string) => void;
+  onlineUsers: string[];
 }
 
 export const ConversationList: React.FC<ConversationListProps> = ({
@@ -22,6 +23,7 @@ export const ConversationList: React.FC<ConversationListProps> = ({
   activeConversationId,
   currentUserId,
   onConversationClick,
+  onlineUsers,
 }) => {
   return (
     <div className="w-1/4 border-r border-gray-200 dark:border-gray-700 p-4 overflow-y-auto">
@@ -37,6 +39,7 @@ export const ConversationList: React.FC<ConversationListProps> = ({
               isActive={conv.id === activeConversationId}
               onClick={onConversationClick}
               currentUserId={currentUserId}
+              isOnline={onlineUsers.includes(conv.user1.id === currentUserId ? conv.user2.id : conv.user1.id)}
             />
           ))
         ) : (

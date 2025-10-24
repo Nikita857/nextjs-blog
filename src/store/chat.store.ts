@@ -1,7 +1,6 @@
 import { create } from 'zustand';
 import { Conversation, Message, Post, User, Category, Reaction } from '@/generated/prisma';
 
-// Создаем более полные типы, которые отражают наши запросы в БД
 export type FullMessage = Message & {
   sender: User;
   sharedPost: (Post & {
@@ -21,21 +20,26 @@ interface ChatState {
   conversations: FullConversation[];
   activeConversationId: string | null;
   messages: FullMessage[];
-  typingUsers: string[]; // Add this
+  typingUsers: string[];
+  onlineUsers: string[]; 
   setConversations: (conversations: FullConversation[]) => void;
   updateConversations: (updater: (prev: FullConversation[]) => FullConversation[]) => void;
   setActiveConversationId: (id: string | null) => void;
   setMessages: (messages: FullMessage[] | ((prev: FullMessage[]) => FullMessage[])) => void;
   addMessage: (message: FullMessage) => void;
-  addTypingUser: (userId: string) => void; // Add this
-  removeTypingUser: (userId: string) => void; // Add this
+  addTypingUser: (userId: string) => void;
+  removeTypingUser: (userId: string) => void;
+  setOnlineUsers: (userIds: string[]) => void;   
+  addOnlineUser: (userId: string) => void;     
+  removeOnlineUser: (userId: string) => void; 
 }
 
 export const useChatStore = create<ChatState>((set) => ({
   conversations: [],
   activeConversationId: null,
   messages: [],
-  typingUsers: [], // Add this
+  typingUsers: [],
+  onlineUsers: [], // <-- НОВОЕ
   setConversations: (conversations) => set({ conversations }),
   updateConversations: (updater) =>
     set((state) => ({ conversations: updater(state.conversations) })),
@@ -48,7 +52,11 @@ export const useChatStore = create<ChatState>((set) => ({
     set((state) => ({
       messages: [...state.messages, message],
     })),
-  addTypingUser: (userId) => set((state) => ({ typingUsers: [...state.typingUsers, userId] })), // Add this
+  addTypingUser: (userId) => set((state) => ({ typingUsers: [...state.typingUsers, userId] })),
   removeTypingUser: (userId) =>
-    set((state) => ({ typingUsers: state.typingUsers.filter((id) => id !== userId) })), // Add this
+    set((state) => ({ typingUsers: state.typingUsers.filter((id) => id !== userId) })),
+  
+  setOnlineUsers: (userIds) => set({ onlineUsers: userIds }),
+  addOnlineUser: (userId) => set((state) => ({ onlineUsers: [...new Set([...state.onlineUsers, userId])] })), // Используем Set для уникальности
+  removeOnlineUser: (userId) => set((state) => ({ onlineUsers: state.onlineUsers.filter(id => id !== userId) })), 
 }));
