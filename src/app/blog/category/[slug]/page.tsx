@@ -1,14 +1,13 @@
 import prisma from "@/utils/prisma";
 import Link from "next/link";
 
-type Props = {
-  params: {
-    slug: string;
-  };
-};
-
-export default async function CategoryPage({ params }: Props) {
-  const categoryName = decodeURIComponent(params.slug);
+export default async function CategoryPage({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
+  const resolvedParams = await params;
+  const categoryName = decodeURIComponent(resolvedParams.slug);
 
   const posts = await prisma.post.findMany({
     where: {

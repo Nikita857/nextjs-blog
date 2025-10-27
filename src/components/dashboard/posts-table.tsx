@@ -3,18 +3,20 @@
 import Link from "next/link";
 import PostActions from "@/components/blog/post.actions";
 import { updatePost, deletePost } from "@/actions/post.actions";
-import { Category, Post } from "@/generated/prisma/client";
+import { Category, Post, Reaction } from "@/generated/prisma/client";
 
 type PostWithRelations = Post & {
   categories: Category[];
+  reactions: Reaction[];
 };
 
 type Props = {
   userPosts: PostWithRelations[];
   allCategories: Category[];
+  authorId: string;
 };
 
-export default function PostsTable({ userPosts, allCategories }: Props) {
+export default function PostsTable({ userPosts, allCategories, authorId }: Props) {
   return (
     <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 sm:p-8">
       <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">
@@ -54,7 +56,12 @@ export default function PostsTable({ userPosts, allCategories }: Props) {
                     post={post}
                     allCategories={allCategories}
                     updatePostAction={updatePostWithId}
-                    deletePostAction={deletePostWithId} initialLikes={0} initialDislikes={0} currentUserReaction={null}                  />
+                    deletePostAction={deletePostWithId} 
+                    initialLikes={post.reactions.filter(r => r.type === 'LIKE').length} 
+                    initialDislikes={post.reactions.filter(r => r.type === 'DISLIKE').length} 
+                    currentUserReaction={post.reactions.find(r => r.userId === authorId)?.type || null}
+                    isAuthor={post.authorId === authorId}
+                    />
                 </div>
               </div>
             );

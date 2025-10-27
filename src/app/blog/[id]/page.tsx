@@ -7,7 +7,13 @@ import { ReactionType } from "@/generated/prisma";
 import Link from "next/link";
 import Image from "next/image";
 
-export default async function PostPage({ params: { id } }: { params: { id: string } }) {
+export default async function PostPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const resolvedParams = await params;
+  const id = resolvedParams.id;
   const session = await auth();
 
   // 1. При загрузке поста, сразу включаем в запрос связанные с ним рубрики
@@ -34,7 +40,7 @@ export default async function PostPage({ params: { id } }: { params: { id: strin
   }
 
   const isAuthor = session?.user?.id === post.authorId;
-  console.log("is author: ",isAuthor);
+  console.log("is author: ", isAuthor);
 
   // 3. Создаем "привязанные" версии экшенов
   // .bind(null, post.id) создает новую функцию, у которой первый аргумент уже "зафиксирован"

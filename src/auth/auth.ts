@@ -59,7 +59,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     async jwt({ token, user }) {
       // `user` доступен только при первом входе
       if (user) {
-        token.id = user.id;
+        token.id = user.id!== undefined ? user.id : '';
       }
       return token;
     },

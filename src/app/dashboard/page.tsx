@@ -21,7 +21,10 @@ export default async function DashboardPage() {
   const userPosts = await prisma.post.findMany({
     where: { authorId: session.user.id },
     orderBy: { createdAt: "desc" },
-    include: { categories: true },
+    include: { 
+      categories: true,
+      reactions: true 
+    },
   });
 
   const allCategories = await prisma.category.findMany();
@@ -100,7 +103,7 @@ export default async function DashboardPage() {
 
           {/* Правая колонка: Посты и другие карточки */}
           <div className="lg:col-span-2 space-y-8">
-            <PostsTable userPosts={userPosts} allCategories={allCategories} />
+            <PostsTable userPosts={userPosts} allCategories={allCategories} authorId={user.id}/>
             <PasswordCard />
           </div>
         </div>

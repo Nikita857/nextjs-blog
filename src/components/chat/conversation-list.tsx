@@ -2,6 +2,7 @@
 
 import { Conversation, Message } from "@/generated/prisma";
 import ConversationListItem from "./conversation-list-item";
+import { FullConversation } from "@/store/chat.store";
 
 // Определяем тип для пропсов
 type ConversationWithDetails = Conversation & {
@@ -51,7 +52,7 @@ export const ConversationList: React.FC<ConversationListProps> = ({
           conversations.map((conv) => (
             <ConversationListItem
               key={conv.id}
-              conversation={conv}
+              conversation={conv as FullConversation}
               isActive={conv.id === activeConversationId}
               onClick={onConversationClick}
               currentUserId={currentUserId}

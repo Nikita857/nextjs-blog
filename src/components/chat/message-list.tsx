@@ -1,6 +1,7 @@
 import { Message } from "@/generated/prisma";
 import { MessageItem } from "./message-Item";
 import { useTheme } from "next-themes";
+import { FullMessage } from "@/store/chat.store";
 
 type MessageListProps = {
   messages: Message[];
@@ -23,7 +24,7 @@ export const MessageList = ({
         messages.map((msg) => (
           <MessageItem
             key={msg.id}
-            message={msg}
+            message={msg as FullMessage}
             isOwnMessage={msg.senderId === currentUserId}
             onDelete={onDeleteMessage}
             onEdit={onEditMessage}

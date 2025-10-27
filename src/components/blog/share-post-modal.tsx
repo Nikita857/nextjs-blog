@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Button, Listbox, ListboxItem, Avatar } from '@heroui/react';
 import CustomModal from '../common/modal';
-import { getFriends } from '@/actions/user.action';
+import { Friend, getFriends } from '@/actions/user.action';
 import { sharePost } from '@/actions/post.actions';
-import { User } from '@/generated/prisma';
+
 
 type Props = {
   isOpen: boolean;
@@ -12,7 +12,7 @@ type Props = {
 };
 
 export default function SharePostModal({ isOpen, onClose, postId }: Props) {
-  const [friends, setFriends] = useState<User[]>([]);
+  const [friends, setFriends] = useState<Friend[]>([]);
   const [selectedFriends, setSelectedFriends] = useState<Set<string>>(new Set());
   const [isSharing, setIsSharing] = useState(false);
 

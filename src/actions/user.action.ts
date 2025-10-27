@@ -7,6 +7,13 @@ import bcrypt from "bcryptjs";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
+export type Friend = {
+  id: string;
+  name: string | null;
+  email: string;
+  image: string | null;
+}
+
 const passwordSchema = z
   .object({
     currentPassword: z.string().min(1, "Пароль обязателен"),
@@ -257,7 +264,7 @@ export async function removeFriend(friendshipId: string) {
   }
 }
 
-export async function getFriends() {
+export async function getFriends(): Promise<{ friends?: Friend[]; error?: string }> {
   const session = await auth();
   if (!session?.user?.id) {
     return { error: "Unauthorized" };
@@ -280,7 +287,7 @@ export async function getFriends() {
       },
     });
 
-    const friends = friendships.map(friendship => 
+    const friends: Friend[] = friendships.map(friendship => 
       friendship.senderId === userId ? friendship.receiver : friendship.sender
     );
 

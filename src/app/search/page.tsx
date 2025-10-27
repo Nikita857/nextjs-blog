@@ -8,14 +8,9 @@ type PostWithRelations = Post & {
   categories: Category[];
 };
 
-type Props = {
-  searchParams: {
-    q?: string;
-  };
-};
-
-export default async function SearchPage({ searchParams }: Props) {
-  const searchQuery = searchParams.q || "";
+export default async function SearchPage({ searchParams }: {searchParams: Promise<{q: string}>}) {
+  const retrieveSearchParams = await searchParams;
+  const searchQuery = retrieveSearchParams.q || "";
 
   let searchResults: PostWithRelations[] = [];
 
