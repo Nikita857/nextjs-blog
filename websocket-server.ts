@@ -5,8 +5,7 @@ import jwt from "jsonwebtoken";
 const prisma = new PrismaClient();
 const io = new Server(3001, {
   cors: {
-    origin: "*",
-    methods: ["GET", "POST"],
+    origin: process.env.CORS_ORIGIN || "http://localhost:3000",    methods: ["GET", "POST"],
   },
 });
 
