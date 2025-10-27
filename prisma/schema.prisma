@@ -10,21 +10,21 @@ datasource db {
 
 model User {
   id                     String         @id @default(uuid())
-  name                   String?
   email                  String         @unique
   password               String
-  image                  String?
-  accounts               Account[]
-  sessions               Session[]
   createdAt              DateTime       @default(now()) @map("created_at")
   updatedAt              DateTime       @updatedAt @map("updated_at")
-  posts                  Post[]
-  reactions              Reaction[] // Исправлено: reaction -> reactions (множественное число)
-  sentFriendRequests     Friendship[]   @relation("SentFriendRequests") // Исправлено имя отношения
-  receivedFriendRequests Friendship[]   @relation("ReceivedFriendRequests") // Исправлено имя отношения
+  image                  String?
+  name                   String?
+  accounts               Account[]
   user1Conversations     Conversation[] @relation("User1Conversations")
   user2Conversations     Conversation[] @relation("User2Conversations")
+  receivedFriendRequests Friendship[]   @relation("ReceivedFriendRequests")
+  sentFriendRequests     Friendship[]   @relation("SentFriendRequests")
   sentMessages           Message[]      @relation("SentMessages")
+  posts                  Post[]
+  reactions              Reaction[]
+  sessions               Session[]
 
   @@map("users")
 }
@@ -34,18 +34,16 @@ model Account {
   type              String
   provider          String
   providerAccountId String
-  refresh_token     String? @db.Text
-  access_token      String? @db.Text
+  refresh_token     String?
+  access_token      String?
   expires_at        Int?
   token_type        String?
   scope             String?
-  id_token          String? @db.Text
+  id_token          String?
   session_state     String?
-
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@id([provider, providerAccountId])
   @@map("accounts")
@@ -55,10 +53,9 @@ model Session {
   sessionToken String   @unique
   userId       String
   expires      DateTime
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
 
   @@map("sessions")
 }
@@ -75,15 +72,15 @@ model VerificationToken {
 model Post {
   id               String     @id @default(uuid())
   title            String
-  content          String?    @db.Text // Добавлен @db.Text для длинного текста
+  content          String?
   published        Boolean    @default(false)
   createdAt        DateTime   @default(now()) @map("created_at")
   updatedAt        DateTime   @updatedAt @map("updated_at")
   authorId         String
-  author           User       @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  categories       Category[] // Добавлен onDelete: Cascade
-  reactions        Reaction[] // Исправлено: reaction -> reactions
   sharedInMessages Message[]  @relation("SharedPosts")
+  author           User       @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  reactions        Reaction[]
+  categories       Category[] @relation("CategoryToPost")
 
   @@map("posts")
 }
@@ -91,45 +88,33 @@ model Post {
 model Category {
   id    String @id @default(uuid())
   name  String @unique
-  posts Post[]
+  posts Post[] @relation("CategoryToPost")
 
   @@map("categories")
-}
-
-enum ReactionType {
-  LIKE
-  DISLIKE
 }
 
 model Reaction {
   id        String       @id @default(uuid())
   userId    String
-  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   postId    String
-  post      Post         @relation(fields: [postId], references: [id], onDelete: Cascade)
   type      ReactionType
   createdAt DateTime     @default(now()) @map("created_at")
+  post      Post         @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, postId])
   @@map("reactions")
 }
 
-enum FriendshipStatus {
-  PENDING
-  ACCEPTED
-  REJECTED
-  BLOCKED
-}
-
 model Friendship {
   id         String           @id @default(uuid())
   senderId   String
-  sender     User             @relation("SentFriendRequests", fields: [senderId], references: [id], onDelete: Cascade)
   receiverId String
-  receiver   User             @relation("ReceivedFriendRequests", fields: [receiverId], references: [id], onDelete: Cascade)
   status     FriendshipStatus @default(PENDING)
-  createdAt  DateTime         @default(now()) @map("created_at") // Добавлен @default(now())
+  createdAt  DateTime         @default(now()) @map("created_at")
   updatedAt  DateTime         @updatedAt @map("updated_at")
+  receiver   User             @relation("ReceivedFriendRequests", fields: [receiverId], references: [id], onDelete: Cascade)
+  sender     User             @relation("SentFriendRequests", fields: [senderId], references: [id], onDelete: Cascade)
 
   @@unique([senderId, receiverId])
   @@map("friendships")
@@ -138,12 +123,12 @@ model Friendship {
 model Conversation {
   id        String    @id @default(uuid())
   user1Id   String
-  user1     User      @relation("User1Conversations", fields: [user1Id], references: [id])
   user2Id   String
-  user2     User      @relation("User2Conversations", fields: [user2Id], references: [id])
-  messages  Message[]
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
+  user1     User      @relation("User1Conversations", fields: [user1Id], references: [id])
+  user2     User      @relation("User2Conversations", fields: [user2Id], references: [id])
+  messages  Message[]
 
   @@unique([user1Id, user2Id])
   @@map("converasations")
@@ -152,15 +137,27 @@ model Conversation {
 model Message {
   id             String       @id @default(uuid())
   conversationId String
-  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
   senderId       String
-  sender         User         @relation("SentMessages", fields: [senderId], references: [id])
-  content        String       @db.Text
+  content        String
   createdAt      DateTime     @default(now())
   isEdited       Boolean      @default(false)
   sharedPostId   String?
   type           String?      @default("text")
-  sharedPost     Post?        @relation("SharedPosts", fields: [sharedPostId], references: [id], onDelete: SetNull)
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender         User         @relation("SentMessages", fields: [senderId], references: [id])
+  sharedPost     Post?        @relation("SharedPosts", fields: [sharedPostId], references: [id])
 
   @@map("messages")
+}
+
+enum ReactionType {
+  LIKE
+  DISLIKE
+}
+
+enum FriendshipStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  BLOCKED
 }
