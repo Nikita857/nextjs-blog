@@ -1,16 +1,10 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useTransition } from "react";
 import { useChatSocket } from "@/hooks/useChatSocket";
 import {
   FullConversation,
-  FullMessage,
   useChatStore,
 } from "@/store/chat.store";
-import {
-  getMessagesForConversation,
-  deleteMessage,
-} from "@/actions/chat.actions";
 import { useSession } from "next-auth/react";
 import { useConversations } from "@/hooks/useConversations";
 import { ConversationList } from "@/components/chat/conversation-list";
