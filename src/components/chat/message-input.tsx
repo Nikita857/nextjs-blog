@@ -4,6 +4,7 @@ import { Button, Input } from "@heroui/react";
 import React, { memo, useState } from "react";
 import EmojiPicker, { EmojiClickData } from "emoji-picker-react";
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const EmojiIcon = (props: any) => (
   <svg
     aria-hidden="true"

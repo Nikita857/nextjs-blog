@@ -42,13 +42,9 @@ export default function FriendsPageClient({
 }: Props) {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<UserWithStatus[]>([]);
-  const [friends, setFriends] = useState<FriendUser[]>(initialFriends); // Состояние друзей тоже PartialUser
-  const [pendingIncoming, setPendingIncoming] = useState(
-    initialPendingIncomingRequests
-  );
-  const [pendingOutgoing, setPendingOutgoing] = useState(
-    initialPendingOutgoingRequests
-  );
+  const [friends] = useState<FriendUser[]>(initialFriends); // Состояние друзей тоже PartialUser
+  const [pendingIncoming] = useState(initialPendingIncomingRequests);
+  const [pendingOutgoing] = useState(initialPendingOutgoingRequests);
   const [isSearching, startSearchTransition] = useTransition();
   const [isActionPending, startActionTransition] = useTransition();
 

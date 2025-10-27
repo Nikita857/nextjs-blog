@@ -38,7 +38,7 @@ export const AcmeLogo = () => {
 
 export default function Header() {
   const pathname = usePathname();
-  const { isAuth, session, status, setAuthState } = useAuthStore();
+  const { isAuth, status, setAuthState } = useAuthStore();
 
   const [isRegistrationOpen, setIsRegistrationOpen] = useState(false);
   const [isLoginOpen, setIsLoginOpen] = useState(false);
@@ -49,7 +49,7 @@ export default function Header() {
     setMounted(true);
   }, [])
 
-  const { theme, systemTheme, setTheme } = useTheme();
+  const { theme, systemTheme } = useTheme();
   const currentTheme = theme === "system" ? systemTheme : theme;
 
   const handleSignOut = async () => {

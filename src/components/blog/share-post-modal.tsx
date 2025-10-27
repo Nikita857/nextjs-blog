@@ -45,6 +45,7 @@ export default function SharePostModal({ isOpen, onClose, postId }: Props) {
           variant="faded"
           selectionMode="multiple"
           selectedKeys={selectedFriends}
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           onSelectionChange={setSelectedFriends as any}
         >
           {friends.map((friend) => (

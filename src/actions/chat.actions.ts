@@ -1,10 +1,8 @@
-'use server';
+"use server";
 
 import { auth } from "@/auth/auth";
 import prisma from "@/utils/prisma";
-import { error } from "console";
 import { revalidatePath } from "next/cache";
-import { success } from "zod";
 import { FullConversation } from "@/store/chat.store";
 
 /**

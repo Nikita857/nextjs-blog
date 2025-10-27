@@ -1,6 +1,5 @@
 "use client";
 
-import { Tooltip } from "@heroui/react";
 import Image from "next/image";
 import { memo } from "react";
 
@@ -12,12 +11,24 @@ type OtherUser = {
   image: string | null;
 } | null;
 
-import { Button } from '@heroui/react';
+import { Button } from "@heroui/react";
 
 // Иконка для стрелки
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const BackIcon = (props: any) => (
-  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
-    <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    fill="none"
+    viewBox="0 0 24 24"
+    strokeWidth={1.5}
+    stroke="currentColor"
+    {...props}
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      d="M15.75 19.5L8.25 12l7.5-7.5"
+    />
   </svg>
 );
 
@@ -28,16 +39,21 @@ interface ChatHeaderProps {
   onBack: () => void; // <-- Новый проп
 }
 
-const ChatHeaderComponent: React.FC<ChatHeaderProps> = ({ otherUser, typingUsers, onlineUsers, onBack }) => {
+const ChatHeaderComponent: React.FC<ChatHeaderProps> = ({
+  otherUser,
+  typingUsers,
+  onlineUsers,
+  onBack,
+}) => {
   const isTyping = otherUser && typingUsers.includes(otherUser.id);
   const isOnline = otherUser && onlineUsers.includes(otherUser.id);
 
   return (
     <div className="bg-white dark:bg-gray-800 p-4 border-b border-gray-200 dark:border-gray-700 flex items-center">
       {/* Кнопка "Назад" для мобильных */}
-      <Button 
-        isIconOnly 
-        variant="flat" 
+      <Button
+        isIconOnly
+        variant="flat"
         className="md:hidden mr-2" // Показываем только на мобильных
         onPress={onBack}
       >
@@ -45,9 +61,11 @@ const ChatHeaderComponent: React.FC<ChatHeaderProps> = ({ otherUser, typingUsers
       </Button>
 
       {otherUser && (
-        <div className="relative mr-3"> {/* Обертка */}
+        <div className="relative mr-3">
+          {" "}
+          {/* Обертка */}
           <Image
-            src={otherUser.image || '/file.svg'}
+            src={otherUser.image || "/file.svg"}
             alt={otherUser.name || otherUser.email}
             width={40}
             height={40}
@@ -61,14 +79,12 @@ const ChatHeaderComponent: React.FC<ChatHeaderProps> = ({ otherUser, typingUsers
       )}
       <div>
         <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
-          {otherUser?.name || otherUser?.email || 'Неизвестный пользователь'}
+          {otherUser?.name || otherUser?.email || "Неизвестный пользователь"}
         </h3>
         {isTyping && <p className="text-sm text-gray-500">печатает...</p>}
       </div>
     </div>
   );
 };
-
-
 
 export const ChatHeader = memo(ChatHeaderComponent);

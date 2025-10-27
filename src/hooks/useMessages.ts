@@ -1,4 +1,5 @@
 import { deleteMessage, getMessagesForConversation } from "@/actions/chat.actions";
+import { User } from "@/generated/prisma";
 import { FullMessage, useChatStore } from "@/store/chat.store";
 import { useSession } from "next-auth/react";
 import { useCallback, useEffect, useRef, useTransition } from "react";
@@ -47,7 +48,7 @@ export const useMessages = (socket: Socket | null, activeConversationId: string 
       type: "text",
       sharedPostId: null,
       sharedPost: null,
-      sender: session.user as any,
+      sender: session.user as User,
     };
     addMessage(tempMessage);
     if (typingTimeoutRef.current) {

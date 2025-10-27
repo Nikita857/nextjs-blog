@@ -2,7 +2,7 @@
 
 import { Button, Input, Textarea } from "@heroui/react";
 import CustomModal from "@/components/common/modal";
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { Category, Post } from "@/generated/prisma/client";
 
 type Props = {
@@ -41,9 +41,9 @@ export default function PostForm({
   };
 
   const handleSelectionChange = (
-    e: React.SyntheticEvent<HTMLTextAreaElement>
+    e: React.SyntheticEvent<HTMLInputElement>
   ) => {
-    const textarea = e.currentTarget;
+    const textarea = e.currentTarget as unknown as HTMLTextAreaElement;
     setCursorPosition({
       start: textarea.selectionStart,
       end: textarea.selectionEnd,

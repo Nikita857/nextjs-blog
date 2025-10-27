@@ -3,11 +3,13 @@ import Credentials from "next-auth/providers/credentials";
 import { getUserFromDb } from "@/utils/user";
 import { signInSchema } from "@/schema/zod";
 import bcryptjs from "bcryptjs";
-import jwt from "jsonwebtoken"; // Добавляем импорт jsonwebtoken
+import jwt from "jsonwebtoken";
 
 const NEXTAUTH_SECRET = process.env.NEXTAUTH_SECRET;
 if (!NEXTAUTH_SECRET) {
-  throw new Error("NEXTAUTH_SECRET is not defined. Please set it in your .env.local file.");
+  throw new Error(
+    "NEXTAUTH_SECRET is not defined. Please set it in your .env.local file."
+  );
 }
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
@@ -45,6 +47,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
           return null;
         } catch (error) {
+          console.error("Failed to login: ", error);
           return null;
         }
       },
@@ -59,7 +62,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     async jwt({ token, user }) {
       // `user` доступен только при первом входе
       if (user) {
-        token.id = user.id!== undefined ? user.id : '';
+        token.id = user.id !== undefined ? user.id : "";
       }
       return token;
     },
@@ -70,7 +73,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         session.user.id = token.id as string;
       }
       // Добавляем JWT токен в сессию для использования на WebSocket
-      session.accessToken = jwt.sign(token, NEXTAUTH_SECRET); // Генерируем JWT напрямую, без expiresIn 
+      session.accessToken = jwt.sign(token, NEXTAUTH_SECRET); // Генерируем JWT напрямую, без expiresIn
       return session;
     },
   },

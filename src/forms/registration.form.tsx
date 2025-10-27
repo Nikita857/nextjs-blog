@@ -25,7 +25,7 @@ const RegistrationForm = ({onClose}: Iprops) => {
 
         const result = await registerUser(formData)
 
-        console.log(formData)
+        console.log("Is register: ",result)
 
         onClose();
     }
