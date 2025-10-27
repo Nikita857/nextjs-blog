@@ -9,7 +9,7 @@
     "lint": "eslint",
     "seed": "dotenv -e .env -- ts-node prisma/seed.ts",
     "websockets": "dotenv -e .env.local -- ts-node websocket-server.ts",
-    "build:ws": "tsc --project tsconfig.json websocket-server.ts"
+    "build:ws": "tsc --project tsconfig.ws.json"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.0",
