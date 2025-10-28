@@ -1,12 +1,19 @@
 "use client";
 
-import { Button, Input, Textarea } from "@heroui/react";
-import CustomModal from "@/components/common/modal";
-import { useState } from "react";
+import { Button, Input  } from "@heroui/react";
+import { useState, useEffect } from "react";
 import { Category, Post } from "@/generated/prisma/client";
+import { useEditor, EditorContent } from "@tiptap/react";
+import StarterKit from "@tiptap/starter-kit";
+import Underline from "@tiptap/extension-underline"; 
+import Link from "@tiptap/extension-link";
+import Image from "@tiptap/extension-image";
+import EditorToolbar from "@/components/common/editor-toolbar";
+
+import '@/app/tiptap.css';
 
 type Props = {
-  post?: Post & { categories: Category[] }; // <-- Исправленный тип для post
+  post?: Post & { categories: Category[] };
   allCategories: Category[];
   buttonText: string;
   formAction: (formData: FormData) => void;
@@ -19,40 +26,65 @@ export default function PostForm({
   formAction,
 }: Props) {
   const [content, setContent] = useState(post?.content || "");
-  const [modalImageUrl, setModalImageUrl] = useState("");
-  const [isImageModalOpen, setIsImageModalOpen] = useState(false);
-  const [cursorPosition, setCursorPosition] = useState({ start: 0, end: 0 });
 
-  const handleInsertImage = () => {
-    if (modalImageUrl) {
-      const imageTag = `<img src="${modalImageUrl}" alt="Изображение" class="w-full h-auto my-4 rounded-lg" />`;
+  const editor = useEditor({
+    extensions: [
+      StarterKit,
+      Underline,
+      Link.configure({
+        openOnClick: false,
+        HTMLAttributes: {
+          class: "text-blue-500 underline",
+        },
+      }),
+      Image.configure({
+        HTMLAttributes: {
+          class: "rounded-lg max-w-full",
+        },
+      }),
+    ],
+    content: content,
+    onUpdate: ({ editor }) => {
+      const html = editor.getHTML();
+      setContent(html);
+    },
+    editorProps: {
+      attributes: {
+        class: "prose prose-sm sm:prose-base lg:prose-lg xl:prose-2xl mx-auto focus:outline-none min-h-[300px] p-4 bg-white dark:bg-gray-800",
+        "data-testid": "tiptap-editor",
+      },
+    },
+    immediatelyRender: false,
+  });
 
-      // Вставляем тег изображения в позицию курсора
-      const newContent =
-        content.substring(0, cursorPosition.start) +
-        imageTag +
-        content.substring(cursorPosition.end, content.length);
-
-      setContent(newContent); // Обновляем состояние контента
-
-      setIsImageModalOpen(false);
-      setModalImageUrl("");
+  // Синхронизация контента при загрузке поста
+  useEffect(() => {
+    if (editor && post?.content) {
+      editor.commands.setContent(post.content);
     }
-  };
+  }, [editor, post?.content]);
 
-  const handleSelectionChange = (
-    e: React.SyntheticEvent<HTMLInputElement>
-  ) => {
-    const textarea = e.currentTarget as unknown as HTMLTextAreaElement;
-    setCursorPosition({
-      start: textarea.selectionStart,
-      end: textarea.selectionEnd,
-    });
+  // Очистка редактора при размонтировании
+  useEffect(() => {
+    return () => {
+      if (editor) {
+        editor.destroy();
+      }
+    };
+  }, [editor]);
+
+  // Обработчик отправки формы
+  const handleSubmit = (e: React.FormEvent) => {
+    if (!editor) return;
+    
+    // Обновляем контент перед отправкой
+    const finalContent = editor.getHTML();
+    setContent(finalContent);
   };
 
   return (
-    <form action={formAction} className="space-y-8">
-      {/* Поле для заголовка*/}
+    <form action={formAction} onSubmit={handleSubmit} className="space-y-8">
+      {/* Поле для заголовка */}
       <div>
         <label
           htmlFor="title"
@@ -68,49 +100,53 @@ export default function PostForm({
           placeholder="Введите заголовок..."
           classNames={{
             inputWrapper:
-              "bg-gray-100 dark:bg-gray-700 border-gray-300 dark:border-gray-600",
+              "bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600",
             input: "text-base focus:outline-none",
           }}
         />
       </div>
 
-      {/* Поле для содержания */}
+      {/* Rich Text Editor */}
       <div>
-        <div className="flex items-center justify-between mb-2">
-          <label
-            htmlFor="content"
-            className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-          >
-            Содержание
-          </label>
-          <Button
-            size="sm"
-            variant="flat"
-            color="secondary"
-            onPress={() => {setIsImageModalOpen(true); setModalImageUrl('')}}
-          >
-            Вставить изображение
-          </Button>
+        <label
+          htmlFor="content"
+          className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+        >
+          Содержание
+        </label>
+        
+        {/* Сообщение если редактор не загрузился */}
+        {!editor && (
+          <div className="text-yellow-600 bg-yellow-50 p-4 rounded-lg">
+            Редактор загружается...
+          </div>
+        )}
+        
+        <div className="border border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden bg-white dark:bg-gray-800">
+          {/* Панель инструментов */}
+          {editor && <EditorToolbar editor={editor} />}
+          
+          {/* Контент редактора */}
+          <EditorContent 
+            editor={editor} 
+            className="min-h-[300px]"
+          />
         </div>
-        <Textarea
-          id="content"
-          name="content"
-          isRequired
-          value={content}
-          onValueChange={setContent}
-          onSelect={handleSelectionChange}
-          onChange={handleSelectionChange}
-          placeholder="Напишите что-нибудь потрясающее..."
-          minRows={12}
-          classNames={{
-            inputWrapper:
-              "bg-gray-100 dark:bg-gray-700 border-gray-300 dark:border-gray-600",
-            input: "text-base focus:outline-none",
-          }}
+        
+        {/* Скрытое поле для формы */}
+        <input 
+          type="hidden" 
+          name="content" 
+          value={content} 
         />
+        
+        {/* Отладочная информация (можно удалить в продакшене) */}
+        <div className="mt-2 text-xs text-gray-500">
+          Длина контента: {content.length} символов
+        </div>
       </div>
 
-      {/* Блок для выбора рубрик*/}
+      {/* Блок для выбора рубрик */}
       <div>
         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
           Рубрики
@@ -139,7 +175,7 @@ export default function PostForm({
         </div>
       </div>
 
-      {/* Блок с чекбоксом "Опубликовать"*/}
+      {/* Блок с чекбоксом "Опубликовать" */}
       <div className="flex items-center gap-4 rounded-lg bg-gray-100 dark:bg-gray-700/50 p-4">
         <input
           id="published"
@@ -159,39 +195,18 @@ export default function PostForm({
         </label>
       </div>
 
-      {/* Кнопка отправки*/}
+      {/* Кнопка отправки */}
       <div className="text-right pt-4">
-        <Button color="primary" type="submit" size="lg" className="shadow-lg">
+        <Button 
+          color="primary" 
+          type="submit" 
+          size="lg" 
+          className="shadow-lg"
+          isDisabled={!editor} // Блокируем пока редактор не готов
+        >
           {buttonText}
         </Button>
       </div>
-
-      {/*Модальное окно для вставки изображения*/}
-      <CustomModal
-        isOpen={isImageModalOpen}
-        onClose={() => setIsImageModalOpen(false)}
-        title="Вставить изображение"
-        size="md"
-      >
-        <div className="space-y-4">
-          <input
-            type="text"
-            placeholder="URL изображения (например, https://example.com/image.jpg)"
-            value={modalImageUrl}
-            onChange={(e) => setModalImageUrl(e.target.value)}
-            className="w-full p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 
-     dark:text-gray-100"
-          />
-          <div className="flex justify-end gap-2">
-            <Button variant="flat" onPress={() => setIsImageModalOpen(false)}>
-              Отмена
-            </Button>
-            <Button color="primary" onPress={handleInsertImage}>
-              Вставить
-            </Button>
-          </div>
-        </div>
-      </CustomModal>
     </form>
   );
 }

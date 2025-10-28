@@ -1,0 +1,69 @@
+/* styles/tiptap.css */
+/* Основные стили редактора */
+.ProseMirror {
+  padding: 1rem;
+  min-height: 300px;
+  outline: none;
+  background: white;
+}
+
+/* Стили для темной темы */
+.dark .ProseMirror {
+  background: #1f2937;
+  color: white;
+}
+
+/* Заголовки */
+.ProseMirror h1 {
+  font-size: 2rem;
+  font-weight: bold;
+  margin: 1rem 0;
+}
+
+.ProseMirror h2 {
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin: 0.75rem 0;
+}
+
+.ProseMirror h3 {
+  font-size: 1.25rem;
+  font-weight: bold;
+  margin: 0.5rem 0;
+}
+
+/* Параграфы */
+.ProseMirror p {
+  margin: 0.5rem 0;
+  line-height: 1.6;
+}
+
+/* Списки */
+.ProseMirror ul, .ProseMirror ol {
+  padding-left: 1.5rem;
+  margin: 0.5rem 0;
+}
+
+.ProseMirror li {
+  margin: 0.25rem 0;
+}
+
+/* Код */
+.ProseMirror code {
+  background: #f3f4f6;
+  padding: 0.125rem 0.25rem;
+  border-radius: 0.25rem;
+  font-family: monospace;
+}
+
+.dark .ProseMirror code {
+  background: #374151;
+}
+
+/* Блок цитаты */
+.ProseMirror blockquote {
+  border-left: 4px solid #3b82f6;
+  padding-left: 1rem;
+  margin: 1rem 0;
+  font-style: italic;
+}

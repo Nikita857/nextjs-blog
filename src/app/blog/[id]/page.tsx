@@ -6,6 +6,8 @@ import { deletePost, updatePost } from "@/actions/post.actions";
 import { ReactionType } from "@/generated/prisma";
 import Link from "next/link";
 import Image from "next/image";
+import { addComment, getCommentsForPost } from "@/actions/comment.actions"; // Импорт Server Actions для комментариев
+import CommentSection from "@/components/blog/comment-section";
 
 export default async function PostPage({
   params,
@@ -40,7 +42,6 @@ export default async function PostPage({
   }
 
   const isAuthor = session?.user?.id === post.authorId;
-  console.log("is author: ", isAuthor);
 
   // 3. Создаем "привязанные" версии экшенов
   // .bind(null, post.id) создает новую функцию, у которой первый аргумент уже "зафиксирован"
@@ -57,6 +58,9 @@ export default async function PostPage({
   const currentUserReaction = session?.user?.id
     ? post.reactions.find((r) => r.user.id === session.user?.id)?.type || null
     : null;
+
+  // Получаем комментарии для этого поста
+  const comments = await getCommentsForPost(id);
 
   return (
     <article className="w-full max-w-4xl mx-auto px-4 sm:px-6 py-8 sm:py-12 ">
@@ -123,6 +127,14 @@ export default async function PostPage({
             isAuthor={isAuthor}
           />
         </div>
+
+        {/* Секция комментариев */}
+        <CommentSection
+          postId={post.id}
+          addCommentAction={addComment}
+          isAuthor={isAuthor}
+          comments={comments}
+        />
       </div>
     </article>
   );

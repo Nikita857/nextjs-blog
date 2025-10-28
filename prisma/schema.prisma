@@ -25,6 +25,7 @@ model User {
   posts                  Post[]
   reactions              Reaction[]
   sessions               Session[]
+  comments               Comment[]
 
   @@map("users")
 }
@@ -78,6 +79,7 @@ model Post {
   updatedAt        DateTime   @updatedAt @map("updated_at")
   authorId         String
   sharedInMessages Message[]  @relation("SharedPosts")
+  comments         Comment[] // Новое поле для комментариев
   author           User       @relation(fields: [authorId], references: [id], onDelete: Cascade)
   reactions        Reaction[]
   categories       Category[] @relation("CategoryToPost")
@@ -148,6 +150,19 @@ model Message {
   sharedPost     Post?        @relation("SharedPosts", fields: [sharedPostId], references: [id])
 
   @@map("messages")
+}
+
+model Comment {
+  id        String   @id @default(uuid())
+  content   String   @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  authorId  String
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  postId    String
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@map("comments")
 }
 
 enum ReactionType {

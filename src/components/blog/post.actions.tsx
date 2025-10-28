@@ -5,7 +5,7 @@ import { useState } from "react";
 import { Button } from "@heroui/react";
 import CustomModal from "../common/modal";
 import PostForm from "@/forms/post.form";
-import { Category, Post, ReactionType } from "@/generated/prisma/client";
+import { Category, Comment, Post, ReactionType, User } from "@/generated/prisma/client";
 import ReactionButtons from "./reaction-buttons";
 
 type Props = {
@@ -27,7 +27,7 @@ export default function PostActions({
   initialLikes,
   initialDislikes,
   currentUserReaction,
-  isAuthor,
+  isAuthor
 }: Props) {
   const [isModalOpen, setModalOpen] = useState(false);
 

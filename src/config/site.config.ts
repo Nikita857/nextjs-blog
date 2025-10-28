@@ -7,5 +7,5 @@ export const siteConfig = {
         {href: "/friends", label: "Друзья" },
         {href: "/chat", label: "Чат" }
     ],
-    description: "sheesh"
+    description: ""
 }
